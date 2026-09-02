@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="FixWise AI helps homeowners understand repair problems before calling a pro." />
+  <title>FixWise AI — Know what's wrong before you call a pro.</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="#top" aria-label="FixWise AI home">
+        <span class="brand-mark">FW</span>
+        <span>FixWise AI</span>
+      </a>
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false">☰</button>
+      <nav id="navLinks" class="nav-links">
+        <a href="#diagnosis">AI Diagnosis</a>
+        <a href="#guides">Repair Guides</a>
+        <a href="#kids">FixWise Kids</a>
+        <a href="#safety">Safety</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="container hero-grid">
+        <div>
+          <div class="eyebrow">AI-powered home repair help</div>
+          <h1>Know what's wrong <span>before you call a pro.</span></h1>
+          <p class="hero-copy">
+            Describe the problem, add details, and let FixWise AI help you understand
+            what may be happening, what to check next, and when it is safer to call a professional.
+          </p>
+          <div class="hero-actions">
+            <a class="btn primary" href="#diagnosis">Try the diagnosis demo</a>
+            <a class="btn secondary" href="#guides">Browse repair guides</a>
+          </div>
+          <div class="trust-row">
+            <span>✓ Step-by-step guidance</span>
+            <span>✓ Safety-first recommendations</span>
+            <span>✓ Built for real homeowners</span>
+          </div>
+        </div>
+
+        <div class="hero-card">
+          <div class="status-pill">FixWise AI Preview</div>
+          <h2>What's going on at home?</h2>
+          <p>Start by describing what you see, hear, smell, or notice.</p>
+          <div class="fake-input">“My kitchen sink is draining slowly and gurgling…”</div>
+          <div class="mini-result">
+            <strong>Possible causes</strong>
+            <span>Partial drain blockage</span>
+            <span>Vent issue</span>
+            <span>P-trap buildup</span>
+          </div>
+          <small>Demo only — this version does not send your problem to an AI service yet.</small>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="diagnosis">
+      <div class="container">
+        <div class="section-heading">
+          <div class="eyebrow">FixWise AI Home Diagnosis</div>
+          <h2>Start with the symptoms. Build toward the answer.</h2>
+          <p>Use this working front-end demo to see how the diagnosis experience can feel.</p>
+        </div>
+
+        <div class="diagnosis-layout">
+          <form class="diagnosis-card" id="diagnosisForm">
+            <label for="category">What kind of problem is it?</label>
+            <select id="category">
+              <option>Plumbing</option>
+              <option>Electrical</option>
+              <option>Appliance</option>
+              <option>Heating & Cooling</option>
+              <option>Doors & Windows</option>
+              <option>General Home Repair</option>
+            </select>
+
+            <label for="problem">Describe what is happening</label>
+            <textarea id="problem" rows="6" placeholder="Example: The bathroom faucet drips even when both handles are fully off."></textarea>
+
+            <label class="upload-box" for="photoUpload">
+              <span class="upload-icon">＋</span>
+              <span>
+                <strong>Add a photo</strong>
+                <small>Photo analysis will be connected in a later version.</small>
+              </span>
+            </label>
+            <input id="photoUpload" type="file" accept="image/*" hidden />
+
+            <button class="btn primary full" type="submit">Analyze problem</button>
+          </form>
+
+          <aside class="result-card" id="resultCard">
+            <div class="result-top">
+              <span class="result-icon">🔧</span>
+              <div>
+                <div class="eyebrow">FixWise response</div>
+                <h3 id="resultTitle">Tell me what you're seeing.</h3>
+              </div>
+            </div>
+            
+            <div id="dangerWarning" class="danger-warning" style="display: none;">
+              <div class="warning-header">
+                <span class="warning-icon">⚠️</span>
+                <strong id="warningTitle">Safety Alert</strong>
+              </div>
+              <p id="warningText"></p>
+              <div class="warning-actions">
+                <span class="warning-badge" id="warningBadge"></span>
+              </div>
+            </div>
+
+            <p id="resultText">
+              Enter a repair problem and press Analyze problem. This demo will show how the future AI diagnosis flow can respond.
+            </p>
+
+            <div id="possibleCauses" style="display: none;" class="causes-section">
+              <h4>Possible causes</h4>
+              <ul id="causesList"></ul>
+            </div>
+
+            <div class="result-grid">
+              <div><span>Next check</span><strong id="nextCheck">Waiting for details</strong></div>
+              <div><span>DIY level</span><strong id="diyLevel">—</strong></div>
+              <div><span>Safety</span><strong id="safetyLevel">—</strong></div>
+            </div>
+
+            <div id="professionalNote" style="display: none;" class="professional-note">
+              <strong>Pro tip:</strong> <span id="professionalText"></span>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section class="section alt" id="guides">
+      <div class="container">
+        <div class="section-heading">
+          <div class="eyebrow">Repair Guides</div>
+          <h2>Clear instructions without the guesswork.</h2>
+          <p>Each guide is designed around tools, parts, safety, troubleshooting, and the point where a professional should take over.</p>
+        </div>
+
+        <div class="cards">
+          <article class="guide-card">
+            <div class="guide-icon">🚰</div>
+            <span class="tag">Plumbing</span>
+            <h3>Fix a dripping faucet</h3>
+            <p>Identify the faucet type, shut off water, inspect seals, and replace common wear parts.</p>
+            <div class="guide-meta"><span>20–45 min</span><span>Beginner</span></div>
+          </article>
+
+          <article class="guide-card">
+            <div class="guide-icon">🚪</div>
+            <span class="tag">Doors</span>
+            <h3>Stop a door from sticking</h3>
+            <p>Check hinge alignment, seasonal swelling, loose screws, and contact points before sanding.</p>
+            <div class="guide-meta"><span>15–30 min</span><span>Beginner</span></div>
+          </article>
+
+          <article class="guide-card">
+            <div class="guide-icon">🌡️</div>
+            <span class="tag">Heating & Cooling</span>
+            <h3>Why isn't a room heating?</h3>
+            <p>Work through vents, filters, thermostat settings, airflow, and signs that require HVAC service.</p>
+            <div class="guide-meta"><span>10–25 min</span><span>Easy check</span></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section kids" id="kids">
+      <div class="container kids-grid">
+        <div class="fixy-card" aria-label="Fixy mascot preview">
+          <div class="fixy-face">
+            <div class="fixy-eyes"><span></span><span></span></div>
+            <div class="fixy-smile"></div>
+          </div>
+          <div class="fixy-badge">FIXY</div>
+          <p>“I don't know yet — let's figure it out!”</p>
+        </div>
+
+        <div>
+          <div class="eyebrow">FixWise Kids</div>
+          <h2>Fix it together. Learn it together.</h2>
+          <p>
+            FixWise Kids is built around the idea that a child can safely follow along with the same repair
+            their parent is doing in the real world. Fixy turns the repair into an age-appropriate learning adventure.
+          </p>
+          <div class="kids-points">
+            <div><strong>Tools</strong><span>Learn what tools do and how they are used safely.</span></div>
+            <div><strong>Measurements</strong><span>Practice length, size, counting, and basic math.</span></div>
+            <div><strong>Problem-solving</strong><span>Learn how to test ideas instead of guessing.</span></div>
+            <div><strong>Money</strong><span>Understand parts, repair costs, saving, and value.</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section safety" id="safety">
+      <div class="container safety-box">
+        <div>
+          <div class="eyebrow">Safety first</div>
+          <h2>Some jobs should stop before they start.</h2>
+        </div>
+        <p>
+          FixWise AI should always flag high-risk situations involving electricity, gas, structural damage,
+          fire, hazardous materials, or other conditions where professional help is the safer choice.
+        </p>
+      </div>
+    </section>
+
+    <section class="cta">
+      <div class="container">
+        <div class="cta-box">
+          <div>
+            <div class="eyebrow light">The FixWise vision</div>
+            <h2>Understand the problem. Make a smarter next move.</h2>
+            <p>This is the first working website foundation. AI diagnosis, photo analysis, accounts, saved projects, and personalized repair steps can be added next.</p>
+          </div>
+          <a class="btn light-btn" href="#diagnosis">Start with a repair</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container footer-row">
+      <div class="brand"><span class="brand-mark">FW</span><span>FixWise AI</span></div>
+      <p>Know what's wrong before you call a pro.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
