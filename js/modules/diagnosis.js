@@ -90,7 +90,10 @@ function resetResultSections() {
     'professionalNote', 'photoNote'].forEach(key => {
     if (els[key]) els[key].style.display = 'none';
   });
-  if (els.confidenceBadge) els.confidenceBadge.textContent = '';
+  if (els.confidenceBadge) {
+    els.confidenceBadge.textContent = '';
+    els.confidenceBadge.className = 'confidence-badge';
+  }
 }
 
 function renderModeBadge() {
@@ -102,9 +105,15 @@ function renderModeBadge() {
 
 function renderConversationLog() {
   if (!els.conversationLog) return;
-  els.conversationLog.innerHTML = session.conversationHistory
-    .map(entry => `<li><strong>You added:</strong> ${escapeHtml(entry.answer)}</li>`)
-    .join('');
+  els.conversationLog.textContent = '';
+  session.conversationHistory.forEach(entry => {
+    const li = document.createElement('li');
+    const label = document.createElement('strong');
+    label.textContent = 'You added: ';
+    li.appendChild(label);
+    li.appendChild(document.createTextNode(entry.answer));
+    els.conversationLog.appendChild(li);
+  });
 }
 
 function showEmptyState(message) {
@@ -222,6 +231,7 @@ export function initDiagnosisForm() {
   async function runDiagnosis() {
     els.analyzeBtn.disabled = true;
     els.analyzeBtn.textContent = 'Analyzing…';
+    if (els.submitFollowUp) els.submitFollowUp.disabled = true;
     showLoadingState();
 
     try {
@@ -255,6 +265,7 @@ export function initDiagnosisForm() {
     } finally {
       els.analyzeBtn.disabled = false;
       els.analyzeBtn.textContent = 'Analyze problem';
+      if (els.submitFollowUp) els.submitFollowUp.disabled = false;
     }
   }
 
@@ -285,8 +296,9 @@ export function initDiagnosisForm() {
   });
 
   els.submitFollowUp?.addEventListener('click', () => {
+    if (els.submitFollowUp.disabled) return;
     const answer = els.followUpAnswer?.value.trim();
-    if (!answer) return;
+    if (!answer || !session.lastDiagnosis) return;
 
     session.conversationHistory.push({ answer, timestamp: new Date().toISOString() });
     saveSession();

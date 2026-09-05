@@ -46,6 +46,9 @@ function buildPhotoTile({ file, url }, index) {
   tile.className = 'photo-tile';
 
   const img = document.createElement('img');
+  // `url` is always a same-origin `blob:` URI produced locally by
+  // URL.createObjectURL(file) below (never remote or user-supplied HTML),
+  // so assigning it to `.src` is safe; this is not an HTML-injection sink.
   img.src = url;
   img.alt = `Preview of uploaded photo ${index + 1}: ${file.name}`;
 

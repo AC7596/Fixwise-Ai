@@ -61,10 +61,10 @@ export const isBackendConnected = () => Boolean(BACKEND_BASE_URL);
  * @param {string} request.smell
  * @param {string} request.otherSymptoms
  * @param {File[]} request.photos
- * @param {Array<{question: string, answer: string}>} [request.conversationHistory]
- *   Prior follow-up question/answer pairs from this diagnosis session, so a
- *   real backend can progressively narrow the diagnosis instead of treating
- *   every request as unrelated.
+ * @param {Array<{answer: string, timestamp: string}>} [request.conversationHistory]
+ *   Prior follow-up answers from this diagnosis session (with an ISO 8601
+ *   timestamp for each), so a real backend can progressively narrow the
+ *   diagnosis instead of treating every request as unrelated.
  * @returns {Promise<object>} diagnosis result object
  */
 export async function diagnoseProblem(request) {
@@ -116,6 +116,43 @@ export async function analyzePhotos({ photos }) {
   };
 }
 
+// Weights applied to each signal when estimating demo confidence below.
+// Keyword hits are the strongest signal (they show the exact issue
+// matched), filled-in description fields add a smaller weight each
+// (more context, but not necessarily about *this* issue), and having any
+// follow-up answer at all adds a flat bonus (shows narrowing occurred).
+const KEYWORD_HIT_WEIGHT = 2;
+const FILLED_FIELD_WEIGHT = 1;
+const FOLLOW_UP_BONUS = 1;
+const HIGH_CONFIDENCE_SIGNAL_SCORE = 7;
+const MEDIUM_CONFIDENCE_SIGNAL_SCORE = 4;
+
+/**
+ * Estimate a simple, honest stand-in for a real AI confidence score: more
+ * matched keywords and more filled-in fields means more informational
+ * signal, so the label leans toward "likely" rather than "possible".
+ * Never phrased as a certainty — see language requirements in
+ * README.md/BACKEND.md. A real backend would replace this with a
+ * model-reported score.
+ * @param {number} filledFieldCount
+ * @param {number} matchedKeywordHits
+ * @param {boolean} hasFollowUp
+ * @returns {{level: string, label: string}}
+ */
+function estimateConfidence(filledFieldCount, matchedKeywordHits, hasFollowUp) {
+  const signalScore = (filledFieldCount * FILLED_FIELD_WEIGHT)
+    + (matchedKeywordHits * KEYWORD_HIT_WEIGHT)
+    + (hasFollowUp ? FOLLOW_UP_BONUS : 0);
+
+  if (signalScore >= HIGH_CONFIDENCE_SIGNAL_SCORE) {
+    return { level: 'high', label: 'Likely cause, based on the details you provided' };
+  }
+  if (signalScore >= MEDIUM_CONFIDENCE_SIGNAL_SCORE) {
+    return { level: 'medium', label: 'Possible cause, based on the information provided so far' };
+  }
+  return { level: 'low', label: 'Low confidence — add more detail or answer a follow-up question to narrow this down' };
+}
+
 function localDemoDiagnosis({ category, problem, seen, heard, smell, otherSymptoms, conversationHistory }) {
   const categoryKey = (category || '').toLowerCase();
   const categoryData = diagnosisDatabase[categoryKey];
@@ -152,21 +189,9 @@ function localDemoDiagnosis({ category, problem, seen, heard, smell, otherSympto
     }
   }
 
-  // A simple, honest stand-in for a real AI confidence score: more filled-in
-  // fields and more matched keywords means more informational signal, so
-  // the label leans toward "likely" rather than "possible". Never phrased
-  // as a certainty — see language requirements in README/BACKEND.md.
-  let confidence = null;
-  if (matchedIssue) {
-    const signalScore = fields.length + matchedKeywordHits + (conversationHistory && conversationHistory.length ? 1 : 0);
-    if (signalScore >= 5) {
-      confidence = { level: 'high', label: 'Likely cause, based on the details you provided' };
-    } else if (signalScore >= 3) {
-      confidence = { level: 'medium', label: 'Possible cause, based on the information provided so far' };
-    } else {
-      confidence = { level: 'low', label: 'Low confidence — add more detail or answer a follow-up question to narrow this down' };
-    }
-  }
+  const confidence = matchedIssue
+    ? estimateConfidence(fields.length, matchedKeywordHits, Boolean(conversationHistory && conversationHistory.length))
+    : null;
 
   return {
     matched: Boolean(matchedIssue),
