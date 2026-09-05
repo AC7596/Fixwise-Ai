@@ -3,6 +3,7 @@
 // ========================================
 import { repairGuides, getCategories } from '../data/guides-data.js';
 import { getLevelBySlug } from '../data/levels.js';
+import { escapeHtml } from '../utils/html.js';
 
 let activeCategory = 'All';
 let searchTerm = '';
@@ -111,8 +112,3 @@ function listHtml(items, ordered) {
   return `<${tag}>${items.map(i => `<li>${escapeHtml(i)}</li>`).join('')}</${tag}>`;
 }
 
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = String(str ?? '');
-  return div.innerHTML;
-}

@@ -4,6 +4,7 @@
 import { diagnoseProblem, analyzePhotos, isBackendConnected } from '../api/ai-client.js';
 import { getSelectedPhotos, clearPhotos } from './photo-upload.js';
 import { getLevelBySlug } from '../data/levels.js';
+import { escapeHtml } from '../utils/html.js';
 
 const els = {};
 
@@ -124,12 +125,6 @@ function renderResults(diagnosis, photoResult) {
     els.photoNote.style.display = 'block';
     els.photoNote.textContent = photoResult.note;
   }
-}
-
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
 }
 
 export function initDiagnosisForm() {
