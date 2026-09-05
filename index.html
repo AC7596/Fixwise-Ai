@@ -20,6 +20,7 @@
         <a href="#guides">Repair Guides</a>
         <a href="#kids">FixWise Kids</a>
         <a href="#safety">Safety</a>
+        <a href="#roadmap">Roadmap</a>
       </nav>
     </div>
   </header>
@@ -49,7 +50,7 @@
           <div class="status-pill">FixWise AI Preview</div>
           <h2>What's going on at home?</h2>
           <p>Start by describing what you see, hear, smell, or notice.</p>
-          <div class="fake-input">“My kitchen sink is draining slowly and gurgling…”</div>
+          <div class="fake-input">"My kitchen sink is draining slowly and gurgling…"</div>
           <div class="mini-result">
             <strong>Possible causes</strong>
             <span>Partial drain blockage</span>
@@ -67,10 +68,14 @@
           <div class="eyebrow">FixWise AI Home Diagnosis</div>
           <h2>Start with the symptoms. Build toward the answer.</h2>
           <p>Use this working front-end demo to see how the diagnosis experience can feel.</p>
+          <p class="disclaimer">
+            FixWise provides informational guidance only and cannot guarantee a diagnosis.
+            Always use your own judgment and consult a licensed professional for anything you are unsure about.
+          </p>
         </div>
 
         <div class="diagnosis-layout">
-          <form class="diagnosis-card" id="diagnosisForm">
+          <form class="diagnosis-card" id="diagnosisForm" novalidate>
             <label for="category">What kind of problem is it?</label>
             <select id="category">
               <option>Plumbing</option>
@@ -81,19 +86,44 @@
               <option>General Home Repair</option>
             </select>
 
-            <label for="problem">Describe what is happening</label>
-            <textarea id="problem" rows="6" placeholder="Example: The bathroom faucet drips even when both handles are fully off."></textarea>
+            <label for="problem">Describe the problem in detail</label>
+            <textarea id="problem" rows="3" placeholder="Example: The bathroom faucet drips even when both handles are fully off."></textarea>
+
+            <label for="seen">What do you see?</label>
+            <textarea id="seen" rows="2" placeholder="Example: Water pooling near the base of the faucet."></textarea>
+
+            <label for="heard">What do you hear?</label>
+            <textarea id="heard" rows="2" placeholder="Example: A hissing sound after the water is turned off."></textarea>
+
+            <label for="smell">Any unusual smells?</label>
+            <textarea id="smell" rows="2" placeholder="Example: Musty smell under the sink."></textarea>
+
+            <label for="otherSymptoms">Leaks, movement, temperature changes, damage, or other symptoms</label>
+            <textarea id="otherSymptoms" rows="2" placeholder="Example: The cabinet floor feels soft near the pipe."></textarea>
 
             <label class="upload-box" for="photoUpload">
               <span class="upload-icon">＋</span>
               <span>
-                <strong>Add a photo</strong>
-                <small>Photo analysis will be connected in a later version.</small>
+                <strong>Add photos</strong>
+                <small>Add up to 6 photos. Automatic AI photo analysis will be connected in a later version.</small>
               </span>
             </label>
-            <input id="photoUpload" type="file" accept="image/*" hidden />
+            <input id="photoUpload" type="file" accept="image/*" multiple hidden />
+            <p class="upload-help">
+              Helpful photos: the full area, a close-up of the problem, any leaks or damage, and model/serial labels if visible.
+            </p>
+            <div id="photoPreviewGrid" class="photo-preview-grid"></div>
+            <div class="photo-meta-row">
+              <span id="photoCountLabel" class="photo-count"></span>
+              <span id="photoError" class="field-error" role="alert"></span>
+            </div>
 
-            <button class="btn primary full" type="submit">Analyze problem</button>
+            <p id="formError" class="field-error" role="alert"></p>
+
+            <div class="form-actions">
+              <button class="btn primary full" type="submit" id="analyzeBtn">Analyze problem</button>
+              <button class="btn secondary full" type="button" id="resetDiagnosis">Reset</button>
+            </div>
           </form>
 
           <aside class="result-card" id="resultCard">
@@ -104,7 +134,7 @@
                 <h3 id="resultTitle">Tell me what you're seeing.</h3>
               </div>
             </div>
-            
+
             <div id="dangerWarning" class="danger-warning" style="display: none;">
               <div class="warning-header">
                 <span class="warning-icon">⚠️</span>
@@ -120,20 +150,57 @@
               Enter a repair problem and press Analyze problem. This demo will show how the future AI diagnosis flow can respond.
             </p>
 
-            <div id="possibleCauses" style="display: none;" class="causes-section">
-              <h4>Possible causes</h4>
-              <ul id="causesList"></ul>
+            <div id="mostLikelyCauses" style="display: none;" class="causes-section">
+              <h4>Most likely causes</h4>
+              <ul id="mostLikelyList"></ul>
+            </div>
+
+            <div id="otherCausesSection" style="display: none;" class="causes-section alt-causes">
+              <h4>Other possible causes</h4>
+              <ul id="otherCausesList"></ul>
+            </div>
+
+            <div id="clarifyingSection" style="display: none;" class="causes-section">
+              <h4>Questions that could narrow this down</h4>
+              <ul id="clarifyingList"></ul>
+            </div>
+
+            <div id="stepsSection" style="display: none;" class="causes-section">
+              <h4>Step-by-step troubleshooting</h4>
+              <ol id="stepsList"></ol>
             </div>
 
             <div class="result-grid">
               <div><span>Next check</span><strong id="nextCheck">Waiting for details</strong></div>
-              <div><span>DIY level</span><strong id="diyLevel">—</strong></div>
+              <div><span>DIY level</span><strong id="diyLevel" class="result-badge">—</strong></div>
+              <div><span>Estimated time</span><strong id="estimatedTime">—</strong></div>
               <div><span>Safety</span><strong id="safetyLevel">—</strong></div>
+            </div>
+
+            <div id="toolsSection" style="display: none;" class="causes-section">
+              <h4>Tools that may be needed</h4>
+              <ul id="toolsList"></ul>
+            </div>
+
+            <div id="partsSection" style="display: none;" class="causes-section">
+              <h4>Parts / materials that may be needed</h4>
+              <ul id="partsList"></ul>
+            </div>
+
+            <div id="tipsSection" style="display: none;" class="causes-section">
+              <h4>Helpful tips</h4>
+              <ul id="tipsList"></ul>
+            </div>
+
+            <div id="stopSection" style="display: none;" class="stop-note">
+              <strong>Stop if:</strong> <span id="stopText"></span>
             </div>
 
             <div id="professionalNote" style="display: none;" class="professional-note">
               <strong>Pro tip:</strong> <span id="professionalText"></span>
             </div>
+
+            <p id="photoNote" class="photo-note" style="display:none;"></p>
           </aside>
         </div>
       </div>
@@ -147,31 +214,13 @@
           <p>Each guide is designed around tools, parts, safety, troubleshooting, and the point where a professional should take over.</p>
         </div>
 
-        <div class="cards">
-          <article class="guide-card">
-            <div class="guide-icon">🚰</div>
-            <span class="tag">Plumbing</span>
-            <h3>Fix a dripping faucet</h3>
-            <p>Identify the faucet type, shut off water, inspect seals, and replace common wear parts.</p>
-            <div class="guide-meta"><span>20–45 min</span><span>Beginner</span></div>
-          </article>
-
-          <article class="guide-card">
-            <div class="guide-icon">🚪</div>
-            <span class="tag">Doors</span>
-            <h3>Stop a door from sticking</h3>
-            <p>Check hinge alignment, seasonal swelling, loose screws, and contact points before sanding.</p>
-            <div class="guide-meta"><span>15–30 min</span><span>Beginner</span></div>
-          </article>
-
-          <article class="guide-card">
-            <div class="guide-icon">🌡️</div>
-            <span class="tag">Heating & Cooling</span>
-            <h3>Why isn't a room heating?</h3>
-            <p>Work through vents, filters, thermostat settings, airflow, and signs that require HVAC service.</p>
-            <div class="guide-meta"><span>10–25 min</span><span>Easy check</span></div>
-          </article>
+        <div class="guides-toolbar">
+          <input type="search" id="guideSearch" class="guide-search" placeholder="Search repair guides (e.g. faucet, outlet, filter)…" aria-label="Search repair guides" />
+          <div id="guideFilters" class="filter-bar" role="group" aria-label="Filter guides by category"></div>
         </div>
+
+        <div class="cards" id="guidesGrid"></div>
+        <p id="guidesEmpty" class="empty-state" style="display:none;">No guides match your search yet. Try a different word or category.</p>
       </div>
     </section>
 
@@ -183,7 +232,8 @@
             <div class="fixy-smile"></div>
           </div>
           <div class="fixy-badge">FIXY</div>
-          <p>“I don't know yet — let's figure it out!”</p>
+          <p id="fixySpeech">"I don't know yet — let's figure it out!"</p>
+          <small class="fixy-hint">Tap Fixy for another encouraging message</small>
         </div>
 
         <div>
@@ -191,28 +241,78 @@
           <h2>Fix it together. Learn it together.</h2>
           <p>
             FixWise Kids is built around the idea that a child can safely follow along with the same repair
-            their parent is doing in the real world. Fixy turns the repair into an age-appropriate learning adventure.
+            their parent is doing in the real world. Fixy turns the repair into an age-appropriate learning adventure —
+            a junior helper, never the one doing dangerous work.
           </p>
           <div class="kids-points">
             <div><strong>Tools</strong><span>Learn what tools do and how they are used safely.</span></div>
             <div><strong>Measurements</strong><span>Practice length, size, counting, and basic math.</span></div>
             <div><strong>Problem-solving</strong><span>Learn how to test ideas instead of guessing.</span></div>
             <div><strong>Money</strong><span>Understand parts, repair costs, saving, and value.</span></div>
+            <div><strong>Home science</strong><span>Discover how water, air, and electricity move through a home.</span></div>
+            <div><strong>Safety</strong><span>Learn what to leave to grown-ups and professionals.</span></div>
+          </div>
+
+          <div class="kids-roadmap">
+            <h3>Coming soon to FixWise Kids</h3>
+            <div class="roadmap-chips">
+              <span>Parent-linked repair activities</span>
+              <span>Fixy learning adventures</span>
+              <span>Levels &amp; badges</span>
+              <span>Progress tracking</span>
+              <span>Tool-learning games</span>
+              <span>Measurement activities</span>
+              <span>Money &amp; repair-cost lessons</span>
+              <span>Animated Fixy content</span>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
     <section class="section safety" id="safety">
-      <div class="container safety-box">
-        <div>
+      <div class="container">
+        <div class="section-heading">
           <div class="eyebrow">Safety first</div>
           <h2>Some jobs should stop before they start.</h2>
+          <p>
+            FixWise AI always flags high-risk situations. When you see these signs, stop troubleshooting
+            and contact a qualified professional or emergency service.
+          </p>
         </div>
-        <p>
-          FixWise AI should always flag high-risk situations involving electricity, gas, structural damage,
-          fire, hazardous materials, or other conditions where professional help is the safer choice.
-        </p>
+        <div class="safety-grid">
+          <div class="safety-item"><span class="safety-icon">⚡</span><strong>Electrical hazards</strong><span>Sparks, shocks, burning smells, or exposed wiring.</span></div>
+          <div class="safety-item"><span class="safety-icon">🔥</span><strong>Fire or smoke</strong><span>Any sign of fire, smoke, or burning odor.</span></div>
+          <div class="safety-item"><span class="safety-icon">☠️</span><strong>Gas leaks &amp; carbon monoxide</strong><span>Gas smell, hissing near appliances, or a CO alarm.</span></div>
+          <div class="safety-item"><span class="safety-icon">🏚️</span><strong>Structural damage</strong><span>Wide or growing cracks, sagging floors or ceilings.</span></div>
+          <div class="safety-item"><span class="safety-icon">🧪</span><strong>Hazardous materials</strong><span>Suspected asbestos, lead paint, or chemical spills.</span></div>
+          <div class="safety-item"><span class="safety-icon">💧</span><strong>Major water leaks &amp; sewage</strong><span>Flooding, burst pipes, or sewage backup.</span></div>
+          <div class="safety-item"><span class="safety-icon">🦠</span><strong>Dangerous mold</strong><span>Large mold areas or health symptoms from exposure.</span></div>
+          <div class="safety-item"><span class="safety-icon">🪜</span><strong>Roofing &amp; fall hazards</strong><span>Steep roofs, heights, or unstable ladders.</span></div>
+        </div>
+        <p class="safety-cta">If you are in immediate danger, call your local emergency number before doing anything else.</p>
+      </div>
+    </section>
+
+    <section class="section" id="roadmap">
+      <div class="container">
+        <div class="section-heading">
+          <div class="eyebrow">Product foundation</div>
+          <h2>Built to grow into a full AI home repair assistant.</h2>
+          <p>The front end is organized so these connect to a secure backend without reworking the site.</p>
+        </div>
+        <div class="roadmap-grid">
+          <div class="roadmap-card"><strong>User accounts</strong><span>Sign in and manage your home profile.</span></div>
+          <div class="roadmap-card"><strong>Saved repair projects</strong><span>Pick up where you left off.</span></div>
+          <div class="roadmap-card"><strong>Repair history</strong><span>See past diagnoses and outcomes.</span></div>
+          <div class="roadmap-card"><strong>Personalized recommendations</strong><span>Guidance based on your home and history.</span></div>
+          <div class="roadmap-card"><strong>Ongoing AI conversations</strong><span>Ask follow-up questions about a repair.</span></div>
+          <div class="roadmap-card"><strong>Photo history</strong><span>Track a repair's progress over time.</span></div>
+          <div class="roadmap-card"><strong>Parent/child linked Fixy activities</strong><span>Turn a real repair into a kid-safe lesson.</span></div>
+          <div class="roadmap-card"><strong>Professional referrals</strong><span>Connect with vetted local pros.</span></div>
+          <div class="roadmap-card"><strong>Parts recommendations</strong><span>Know exactly what to buy.</span></div>
+          <div class="roadmap-card"><strong>Repair cost estimates</strong><span>Budget before you start.</span></div>
+        </div>
       </div>
     </section>
 
@@ -222,7 +322,7 @@
           <div>
             <div class="eyebrow light">The FixWise vision</div>
             <h2>Understand the problem. Make a smarter next move.</h2>
-            <p>This is the first working website foundation. AI diagnosis, photo analysis, accounts, saved projects, and personalized repair steps can be added next.</p>
+            <p>This is the working front-end foundation. Connecting a secure AI backend is the next step — see BACKEND.md for details.</p>
           </div>
           <a class="btn light-btn" href="#diagnosis">Start with a repair</a>
         </div>
@@ -237,6 +337,6 @@
     </div>
   </footer>
 
-  <script src="script.js"></script>
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>
