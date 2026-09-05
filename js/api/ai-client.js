@@ -73,8 +73,10 @@ export async function diagnoseProblem(request) {
  * Placeholder for future AI photo analysis. Currently returns an honest
  * "not yet analyzed" result rather than pretending to inspect the images,
  * per project requirements: never fake AI capability that doesn't exist.
+ * @param {object} request
+ * @param {File[]} request.photos
  */
-export async function analyzePhotos(photos) {
+export async function analyzePhotos({ photos }) {
   if (isBackendConnected()) {
     // Real backend photo analysis call would go here.
   }

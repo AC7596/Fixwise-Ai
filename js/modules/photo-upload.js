@@ -94,13 +94,10 @@ export function initPhotoUpload({ inputId, previewGridId, errorId, countLabelId 
 
     const nameLabel = document.createElement('span');
     nameLabel.className = 'photo-tile-name';
-    nameLabel.textContent = truncate(file.name, 18);
+    nameLabel.textContent = file.name;
+    nameLabel.title = file.name;
 
     tile.append(img, removeBtn, nameLabel);
     return tile;
   }
-}
-
-function truncate(str, max) {
-  return str.length > max ? str.slice(0, max - 1) + '…' : str;
 }

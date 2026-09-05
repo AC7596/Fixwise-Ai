@@ -86,8 +86,8 @@ function guideCardHtml(guide) {
         <span>${escapeHtml(guide.time)}</span>
         <span class="result-badge${level ? ` ${level.className}` : ''}">${level ? level.label : '—'}</span>
       </div>
-      <button type="button" class="btn secondary full guide-toggle" aria-expanded="false">View full guide</button>
-      <div class="guide-detail" style="display:none">
+      <button type="button" class="btn secondary full guide-toggle" aria-expanded="false" aria-controls="guide-detail-${escapeHtml(guide.id)}">View full guide</button>
+      <div class="guide-detail" id="guide-detail-${escapeHtml(guide.id)}" style="display:none">
         ${section('Possible causes', listHtml(guide.causes))}
         ${section('Tools needed', listHtml(guide.tools))}
         ${section('Parts / materials', listHtml(guide.parts))}

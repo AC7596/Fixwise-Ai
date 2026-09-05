@@ -161,7 +161,7 @@ export function initDiagnosisForm() {
       const photos = getSelectedPhotos();
       const [diagnosis, photoResult] = await Promise.all([
         diagnoseProblem({ category, problem, seen, heard, smell, otherSymptoms, photos }),
-        analyzePhotos(photos)
+        analyzePhotos({ photos })
       ]);
       renderResults(diagnosis, photoResult);
       els.resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
