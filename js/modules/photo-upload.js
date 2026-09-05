@@ -50,7 +50,7 @@ export function initPhotoUpload({ inputId, previewGridId, errorId, countLabelId 
       }
     }
 
-    if (errorEl) errorEl.textContent = errors.join(' ');
+    if (errorEl) errorEl.textContent = Array.from(new Set(errors)).join(' ');
     input.value = ''; // allow re-selecting the same file later
     renderPreviews(previewGrid);
   });
