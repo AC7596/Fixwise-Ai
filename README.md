@@ -18,15 +18,31 @@ designed to run on **GitHub Pages**.
 
 ## What FixWise AI currently does
 
-- **AI Home Diagnosis (front-end demo):** homeowners pick a category and
-  describe what they see, hear, smell, and notice, optionally attach photos,
-  and get a structured result: most likely causes, other possible causes,
+- **AI Home Diagnosis (front-end demo):** homeowners pick a category
+  (Plumbing, Electrical, HVAC, Appliance, Structural, Automotive/Home
+  Equipment, Doors & Windows, or Other) and describe what they see, hear,
+  smell, and notice, optionally attach photos, and get a structured result:
+  a confidence/likelihood label, most likely causes, other possible causes,
   clarifying questions, step-by-step troubleshooting, tools/parts needed,
   estimated time, DIY difficulty, safety warnings, stop conditions, and
-  when to call a professional.
-- **Photo upload:** select multiple photos, preview them, and remove any
-  before submitting. Photos are attached to the request/demo response but
-  are **not** analyzed by AI yet (see below).
+  when to call a professional. Results are always phrased as "possible" or
+  "likely" — never as a guaranteed fact.
+- **Follow-up conversation:** after a diagnosis, homeowners can add more
+  detail or answer a clarifying question without starting over. Each
+  answer is added to the current diagnosis session and the diagnosis is
+  re-run using the full conversation so far (see "Diagnosis architecture"
+  below).
+- **In-browser session state:** the current diagnosis (form fields, any
+  follow-up answers, and the latest result) is saved to the browser's
+  `sessionStorage` so it survives a page reload within the same tab. It
+  never leaves the browser and is cleared on "Reset" or when the tab closes.
+- **Photo upload:** click to select or drag-and-drop multiple photos,
+  preview them, and remove any before submitting. Photos are attached to
+  the request/demo response but are **not** analyzed by AI yet (see below).
+- **Demo Mode indicator:** a badge next to the diagnosis result clearly
+  shows whether the app is running in **Demo Mode** (no backend configured)
+  or is connected to a real backend, so users are never misled about what
+  produced a result.
 - **Repair Guides library:** searchable/filterable guides across Plumbing,
   Electrical, Heating & Cooling, Doors & Windows, Appliances, Walls &
   Drywall, Flooring, Bathrooms, Kitchens, and Basic Home Maintenance. Each
@@ -45,12 +61,71 @@ designed to run on **GitHub Pages**.
 - Responsive layout (phone/tablet/desktop), mobile navigation, loading/
   error/empty states, and client-side form validation.
 
+## Diagnosis architecture (how it fits together)
+
+```
+User fills form + optional photos
+        │
+        ▼
+js/modules/diagnosis.js  ── builds a request (category, problem, seen,
+        │                    heard, smell, otherSymptoms, photos,
+        │                    conversationHistory) and shows loading state
+        ▼
+js/api/ai-client.js       ── the ONLY place that knows whether a backend
+        │                    is configured (isBackendConnected()).
+        │
+        ├─ Backend configured → sends the request to BACKEND_BASE_URL
+        │                        (see "Demo Mode & backend configuration")
+        │
+        └─ No backend configured (Demo Mode) → localDemoDiagnosis() runs a
+                                                 keyword-matching stand-in
+                                                 against js/data/diagnosis-data.js
+        ▼
+Structured response (matched, confidence, hasDanger/dangerConfig, issue,
+category) is rendered by js/modules/diagnosis.js — this rendering code
+never changes based on whether the response came from the demo engine or
+a real backend, because both return the same shape.
+```
+
+Follow-up answers are appended to `conversationHistory` in the browser
+session and re-sent with the next diagnosis request, so a real backend can
+use the full conversation to progressively narrow its answer instead of
+treating each message as unrelated.
+
+## Demo Mode & backend configuration
+
+FixWise AI ships with **no backend configured**, so it runs in **Demo
+Mode**: `js/api/ai-client.js` uses local, keyword-matching logic instead of
+calling a network API. The UI shows a "Demo Mode" badge next to diagnosis
+results so this is never presented as a real AI analysis.
+
+To connect a real backend later, no code changes or rebuild are required —
+just set its HTTPS URL in **one** of these non-secret places:
+
+- The `content` attribute of `<meta name="fixwise-backend-url" content="">`
+  in `index.html`'s `<head>`, **or**
+- A global `window.FIXWISE_CONFIG = { backendUrl: 'https://...' }` (e.g. via
+  a small, un-committed config script for local overrides).
+
+Once either is set, `isBackendConnected()` becomes `true`, the badge switches
+to "Backend connected", and `diagnoseProblem()`/`analyzePhotos()` will call
+that backend instead of the local demo logic (see the commented example
+`fetch()` calls in `js/api/ai-client.js`).
+
+**Why not just put an API key here instead?** GitHub Pages only serves
+static files — anything in this repository or shipped to the browser is
+publicly visible to anyone who views the page source. A backend *URL* is
+not sensitive (it's just an address), but an AI provider *API key* is a
+secret that must stay server-side. See [BACKEND.md](BACKEND.md) for the
+full explanation and the request/response contract the backend should
+implement.
+
 ## What is a front-end demonstration (no AI backend yet)
 
 - The diagnosis engine (`js/api/ai-client.js` → `localDemoDiagnosis`) is a
   **keyword-matching stand-in**, not a real AI model. It mirrors the shape
-  of a response a real AI backend would return so it can be swapped later
-  without changing the UI code.
+  of a response a real AI backend would return (including a synthetic
+  confidence label) so it can be swapped later without changing the UI code.
 - Photo analysis is **not performed**. Photos are previewed, attached, and
   passed along in the request, but `analyzePhotos()` honestly reports that
   automatic image analysis is not yet connected — the site never pretends
@@ -117,7 +192,9 @@ which GitHub Pages supports without any additional configuration.
 
 1. Build a small secure backend (serverless function or API) that holds the
    real AI provider key **server-side only**.
-2. Set the backend URL in `js/api/ai-client.js` (`BACKEND_BASE_URL`).
+2. Set the backend's HTTPS URL in the `fixwise-backend-url` meta tag in
+   `index.html` (or via `window.FIXWISE_CONFIG.backendUrl`) — see "Demo Mode
+   & backend configuration" above. No rebuild is required.
 3. Replace the demo logic in `diagnoseProblem()` / `analyzePhotos()` with a
    `fetch()` call to that backend, keeping the same request/response shape
    already used by `js/modules/diagnosis.js` so no UI code needs to change.
