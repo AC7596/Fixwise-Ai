@@ -536,7 +536,7 @@ export const diagnosisDatabase = {
       }
     }
   },
-  'general home repair': {
+  other: {
     dangers: {
       keywords: ['crack', 'mold', 'water damage', 'foundation', 'structural', 'decay'],
       message: 'Some general home issues can be serious if they indicate structural problems.',
@@ -617,6 +617,84 @@ export const diagnosisDatabase = {
         stopWhen: 'The moldy area is larger than about 10 square feet, or you have respiratory symptoms.',
         safety: 'Wear mask and gloves; ensure good ventilation',
         pro: 'Extensive mold or hidden moisture requires professional remediation.'
+      }
+    }
+  },
+  structural: {
+    dangers: {
+      keywords: ['foundation', 'sagging', 'bowing', 'collapse', 'load-bearing', 'leaning', 'buckling', 'shift'],
+      message: 'Structural issues can affect the safety of the whole building. Do not remove walls, supports, or load-bearing elements based on this guidance.',
+      badge: 'Structural Engineer / Professional Required'
+    },
+    issues: {
+      'crack|cracks|cracking|foundation': {
+        causes: ['Normal settling', 'Foundation movement', 'Soil shifting under the structure'],
+        otherCauses: ['Seasonal expansion and contraction', 'Poor drainage around the foundation'],
+        clarifyingQuestions: ['Is the crack wider than a pencil width (about 1/4 inch)?', 'Is it growing, stair-stepped, or horizontal?', 'Are doors or windows nearby sticking or misaligned?'],
+        nextCheck: 'Measure crack width and mark both ends with a pencil and date to watch for growth',
+        steps: ['Measure the width of the crack.', 'Mark both ends with a pencil and today\'s date.', 'Photograph it for comparison.', 'Recheck in a few weeks for growth or new cracks nearby.'],
+        tools: ['Tape measure', 'Pencil', 'Camera/phone'],
+        parts: [],
+        time: 'Ongoing monitoring — repair time varies',
+        difficulty: LEVELS.PROFESSIONAL.slug,
+        tips: ['Note whether the crack appears indoors, outdoors, or both — this helps a professional assess it faster.'],
+        stopWhen: 'The crack is wider than 1/4 inch, growing quickly, stair-stepped, or accompanied by sagging, leaning, or sticking doors/windows.',
+        safety: 'Do not attempt structural repairs yourself; monitor and document only',
+        pro: 'Wide, growing, or stair-stepped cracks — or any sign of sagging or leaning — need a structural engineer or licensed contractor evaluation as soon as possible.'
+      },
+      'sag|sagging|bounc|soft floor|uneven floor': {
+        causes: ['Weakened floor joists', 'Moisture damage to framing', 'Undersized support for the span'],
+        otherCauses: ['Settling of support posts or beams below'],
+        clarifyingQuestions: ['Is the area also soft or spongy to the touch?', 'Is there a basement or crawlspace you can inspect underneath?'],
+        nextCheck: 'Inspect visible framing/support from below if safely accessible; avoid extra load on the area',
+        steps: ['Avoid placing heavy furniture or extra load on the affected area.', 'If accessible, look underneath for visible water damage, rot, or broken supports — do not enter unsafe crawlspaces alone.', 'Document what you find with photos.'],
+        tools: ['Flashlight', 'Camera/phone'],
+        parts: [],
+        time: 'Inspection only — repair requires a professional',
+        difficulty: LEVELS.PROFESSIONAL.slug,
+        tips: [],
+        stopWhen: 'The sagging is worsening, or you notice cracking, popping sounds, or visible damage to supports.',
+        safety: 'Reduce load on the area; do not attempt to jack, shim, or replace structural supports yourself',
+        pro: 'Sagging floors or ceilings typically indicate a structural problem that needs a licensed contractor or structural engineer.'
+      }
+    }
+  },
+  'automotive / home equipment': {
+    dangers: {
+      keywords: ['carbon monoxide', 'fuel leak', 'gas smell', 'battery acid', 'sparking', 'fire', 'smoke'],
+      message: 'This may involve fuel, battery, or exhaust hazards. Do not run the engine or equipment in an enclosed space.',
+      badge: 'Stop & Seek Qualified Service'
+    },
+    issues: {
+      'won\'t start|will not start|no start': {
+        causes: ['Dead or weak battery', 'Corroded battery terminals', 'Faulty starter or ignition switch'],
+        otherCauses: ['Empty fuel tank or stale fuel', 'Blown fuse'],
+        clarifyingQuestions: ['Do the lights or dashboard turn on at all?', 'Do you hear clicking, or nothing at all, when you try to start it?'],
+        nextCheck: 'Check the battery connections and charge level first',
+        steps: ['Check that battery terminals are clean and tightly connected.', 'Try a jump start if the battery is suspected (car) or check the equipment\'s battery/fuel per its manual.', 'Check for blown fuses if accessible.'],
+        tools: ['Multimeter (optional)', 'Jumper cables or jump box (for vehicles)', 'Gloves'],
+        parts: ['Replacement battery, if testing confirms it is dead'],
+        time: '15–45 minutes',
+        difficulty: LEVELS.BEGINNER.slug,
+        tips: ['Never bring an open flame near a battery — batteries can emit flammable hydrogen gas.'],
+        stopWhen: 'You smell fuel, see smoke, notice battery swelling/leaking, or sparking occurs.',
+        safety: 'Wear eye protection around batteries; avoid sparks near batteries or fuel',
+        pro: 'If jump-starting or checking the battery/fuses doesn\'t resolve it, a mechanic or equipment technician can diagnose the starter, ignition, or fuel system.'
+      },
+      'won\'t run|stalls|shuts off|overheating': {
+        causes: ['Low fluid levels', 'Clogged air filter', 'Overheating engine or motor'],
+        otherCauses: ['Fuel system issue', 'Worn belt or spark plug'],
+        clarifyingQuestions: ['Are any warning lights or gauges showing a problem?', 'Does it happen right away or only after running a while?'],
+        nextCheck: 'Check fluid levels and let the engine/equipment cool before inspecting further',
+        steps: ['Let the engine/equipment cool down completely before opening anything.', 'Check oil, coolant, and fuel levels per the owner\'s manual.', 'Inspect the air filter for clogging.'],
+        tools: ['Owner\'s manual', 'Gloves'],
+        parts: ['Air filter', 'Fluids as specified by the manual'],
+        time: '20–40 minutes',
+        difficulty: LEVELS.BEGINNER.slug,
+        tips: [],
+        stopWhen: 'The engine is overheating, you see steam/smoke, or there is a strong fuel smell — let it cool and do not open a hot radiator or fuel system.',
+        safety: 'Never open a hot radiator/cooling system; work in a ventilated area away from fuel sources',
+        pro: 'Persistent stalling, overheating, or warning lights should be checked by a qualified mechanic or equipment technician.'
       }
     }
   }

@@ -8,7 +8,7 @@ import { initGuides } from './modules/guides.js';
 import { initFixy } from './modules/kids.js';
 
 initNav();
-initPhotoUpload({ inputId: 'photoUpload', previewGridId: 'photoPreviewGrid', errorId: 'photoError', countLabelId: 'photoCountLabel' });
+initPhotoUpload({ inputId: 'photoUpload', previewGridId: 'photoPreviewGrid', errorId: 'photoError', countLabelId: 'photoCountLabel', dropZoneId: 'uploadBox' });
 initDiagnosisForm();
 initGuides();
 initFixy();

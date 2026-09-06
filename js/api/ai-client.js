@@ -23,9 +23,31 @@
 
 import { diagnosisDatabase } from '../data/diagnosis-data.js';
 
-// TODO: point this at your real backend once it exists, e.g.
-// const BACKEND_BASE_URL = 'https://api.yourfixwisebackend.com';
-const BACKEND_BASE_URL = null; // null = no backend connected yet (demo mode)
+// ----------------------------------------------------------------------
+// CONFIG: how the backend URL is resolved (no secrets, GitHub-Pages-safe)
+// ----------------------------------------------------------------------
+// The backend URL itself is not sensitive (it's just an endpoint address,
+// not a credential), so it is safe to read from either of these
+// non-secret, static-hosting-friendly sources:
+//   1. A global `window.FIXWISE_CONFIG.backendUrl` set by a small,
+//      un-committed config script (useful for local/staging overrides).
+//   2. A `<meta name="fixwise-backend-url" content="...">` tag in
+//      index.html (the default, checked-in mechanism — see the <head>).
+// If neither is set, the app runs in Demo Mode using local logic only.
+function resolveBackendBaseUrl() {
+  if (typeof window === 'undefined') return null;
+  if (window.FIXWISE_CONFIG && window.FIXWISE_CONFIG.backendUrl) {
+    return String(window.FIXWISE_CONFIG.backendUrl).trim() || null;
+  }
+  if (typeof document !== 'undefined') {
+    const meta = document.querySelector('meta[name="fixwise-backend-url"]');
+    const content = meta && meta.getAttribute('content');
+    if (content && content.trim()) return content.trim();
+  }
+  return null;
+}
+
+const BACKEND_BASE_URL = resolveBackendBaseUrl(); // null = Demo Mode
 
 export const isBackendConnected = () => Boolean(BACKEND_BASE_URL);
 
@@ -39,6 +61,10 @@ export const isBackendConnected = () => Boolean(BACKEND_BASE_URL);
  * @param {string} request.smell
  * @param {string} request.otherSymptoms
  * @param {File[]} request.photos
+ * @param {Array<{answer: string, timestamp: string}>} [request.conversationHistory]
+ *   Prior follow-up answers from this diagnosis session (with an ISO 8601
+ *   timestamp for each), so a real backend can progressively narrow the
+ *   diagnosis instead of treating every request as unrelated.
  * @returns {Promise<object>} diagnosis result object
  */
 export async function diagnoseProblem(request) {
@@ -54,6 +80,7 @@ export async function diagnoseProblem(request) {
     // formData.append('heard', request.heard);
     // formData.append('smell', request.smell);
     // formData.append('otherSymptoms', request.otherSymptoms);
+    // formData.append('conversationHistory', JSON.stringify(request.conversationHistory || []));
     // request.photos.forEach(photo => formData.append('photos', photo));
     //
     // const response = await fetch(`${BACKEND_BASE_URL}/api/diagnose`, {
@@ -89,14 +116,54 @@ export async function analyzePhotos({ photos }) {
   };
 }
 
-function localDemoDiagnosis({ category, problem, seen, heard, smell, otherSymptoms }) {
+// Weights applied to each signal when estimating demo confidence below.
+// Keyword hits are the strongest signal (they show the exact issue
+// matched), filled-in description fields add a smaller weight each
+// (more context, but not necessarily about *this* issue), and having any
+// follow-up answer at all adds a flat bonus (shows narrowing occurred).
+const KEYWORD_HIT_WEIGHT = 2;
+const FILLED_FIELD_WEIGHT = 1;
+const FOLLOW_UP_BONUS = 1;
+const HIGH_CONFIDENCE_SIGNAL_SCORE = 7;
+const MEDIUM_CONFIDENCE_SIGNAL_SCORE = 4;
+
+/**
+ * Estimate a simple, honest stand-in for a real AI confidence score: more
+ * matched keywords and more filled-in fields means more informational
+ * signal, so the label leans toward "likely" rather than "possible".
+ * Never phrased as a certainty — see language requirements in
+ * README.md/BACKEND.md. A real backend would replace this with a
+ * model-reported score.
+ * @param {number} filledFieldCount
+ * @param {number} matchedKeywordHits
+ * @param {boolean} hasFollowUp
+ * @returns {{level: string, label: string}}
+ */
+function estimateConfidence(filledFieldCount, matchedKeywordHits, hasFollowUp) {
+  const signalScore = (filledFieldCount * FILLED_FIELD_WEIGHT)
+    + (matchedKeywordHits * KEYWORD_HIT_WEIGHT)
+    + (hasFollowUp ? FOLLOW_UP_BONUS : 0);
+
+  if (signalScore >= HIGH_CONFIDENCE_SIGNAL_SCORE) {
+    return { level: 'high', label: 'Likely cause, based on the details you provided' };
+  }
+  if (signalScore >= MEDIUM_CONFIDENCE_SIGNAL_SCORE) {
+    return { level: 'medium', label: 'Possible cause, based on the information provided so far' };
+  }
+  return { level: 'low', label: 'Low confidence — add more detail or answer a follow-up question to narrow this down' };
+}
+
+function localDemoDiagnosis({ category, problem, seen, heard, smell, otherSymptoms, conversationHistory }) {
   const categoryKey = (category || '').toLowerCase();
   const categoryData = diagnosisDatabase[categoryKey];
 
-  const combinedText = [problem, seen, heard, smell, otherSymptoms]
+  const followUpText = (conversationHistory || [])
+    .map(entry => entry.answer)
     .filter(Boolean)
-    .join(' ')
-    .toLowerCase();
+    .join(' ');
+
+  const fields = [problem, seen, heard, smell, otherSymptoms, followUpText].filter(Boolean);
+  const combinedText = fields.join(' ').toLowerCase();
 
   if (!categoryData || !combinedText.trim()) {
     return { matched: false, category };
@@ -109,18 +176,26 @@ function localDemoDiagnosis({ category, problem, seen, heard, smell, otherSympto
   }
 
   let matchedIssue = null;
+  let matchedKeywordHits = 0;
   if (categoryData.issues) {
     for (const [keyPattern, issueData] of Object.entries(categoryData.issues)) {
       const patterns = keyPattern.split('|').map(p => p.trim());
-      if (patterns.some(p => combinedText.includes(p))) {
+      const hits = patterns.filter(p => combinedText.includes(p)).length;
+      if (hits > 0) {
         matchedIssue = issueData;
+        matchedKeywordHits = hits;
         break;
       }
     }
   }
 
+  const confidence = matchedIssue
+    ? estimateConfidence(fields.length, matchedKeywordHits, Boolean(conversationHistory && conversationHistory.length))
+    : null;
+
   return {
     matched: Boolean(matchedIssue),
+    confidence,
     hasDanger,
     dangerConfig,
     issue: matchedIssue,

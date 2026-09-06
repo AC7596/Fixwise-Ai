@@ -42,6 +42,28 @@ with no network calls and no keys anywhere in the repository.
    basic AI diagnosis, but is needed for the "Product Foundation" roadmap
    items described in the README.
 
+## Request shape the front end sends
+
+```jsonc
+{
+  "category": "string (Plumbing | Electrical | Heating & Cooling | Appliance | Structural | Automotive / Home Equipment | Doors & Windows | Other)",
+  "problem": "string",
+  "seen": "string",
+  "heard": "string",
+  "smell": "string",
+  "otherSymptoms": "string",
+  "photos": ["File", "..."],
+  "conversationHistory": [
+    { "answer": "string", "timestamp": "ISO 8601 string" }
+  ]
+}
+```
+
+`conversationHistory` carries every follow-up answer the homeowner has
+given so far in the current browser session (see "Follow-up conversation"
+in the README), so the backend can progressively narrow the diagnosis
+instead of treating each request as unrelated to the last.
+
 ## Response shape the front end expects
 
 To avoid reworking the UI when a real backend is connected, keep the same
@@ -50,6 +72,10 @@ shape currently used by the demo logic in `js/api/ai-client.js`:
 ```jsonc
 {
   "matched": true,
+  "confidence": {
+    "level": "high | medium | low",
+    "label": "string, e.g. \"Likely cause, based on the details you provided\""
+  },
   "hasDanger": false,
   "dangerConfig": { "message": "string", "badge": "string" },
   "issue": {
@@ -71,11 +97,18 @@ shape currently used by the demo logic in `js/api/ai-client.js`:
 }
 ```
 
+`confidence` is optional (omit or set to `null` when there isn't enough
+signal for even a rough estimate) and must always be phrased as a
+likelihood ("possible cause", "likely cause") — never as a certainty.
+
 ## Steps to connect the real backend
 
 1. Build and deploy the backend endpoint(s) described above.
-2. In `js/api/ai-client.js`, set `BACKEND_BASE_URL` to the deployed HTTPS
-   URL.
+2. Set the backend's HTTPS URL non-secretly — either the
+   `fixwise-backend-url` `<meta>` tag in `index.html`, or a
+   `window.FIXWISE_CONFIG.backendUrl` global (see `resolveBackendBaseUrl()`
+   in `js/api/ai-client.js`). No secrets are involved in this step; the URL
+   itself is not sensitive.
 3. Replace the body of `diagnoseProblem()` and `analyzePhotos()` with
    `fetch()` calls to the backend (example code is already sketched in
    comments in that file).

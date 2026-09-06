@@ -5,6 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="FixWise AI helps homeowners understand repair problems before calling a pro." />
   <title>FixWise AI — Know what's wrong before you call a pro.</title>
+  <!--
+    Backend configuration (no secrets here — see BACKEND.md).
+    Leave content empty to run in Demo Mode. Once a secure backend is
+    deployed, set content to its HTTPS base URL (e.g. a serverless
+    function endpoint) and the site will start sending real requests
+    instead of using the local demo diagnosis engine.
+  -->
+  <meta name="fixwise-backend-url" content="" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -78,12 +86,14 @@
           <form class="diagnosis-card" id="diagnosisForm" novalidate>
             <label for="category">What kind of problem is it?</label>
             <select id="category">
-              <option>Plumbing</option>
-              <option>Electrical</option>
-              <option>Appliance</option>
-              <option>Heating & Cooling</option>
-              <option>Doors & Windows</option>
-              <option>General Home Repair</option>
+              <option value="Plumbing">Plumbing</option>
+              <option value="Electrical">Electrical</option>
+              <option value="Heating & Cooling">HVAC (Heating & Cooling)</option>
+              <option value="Appliance">Appliance</option>
+              <option value="Structural">Structural</option>
+              <option value="Automotive / Home Equipment">Automotive / Home Equipment</option>
+              <option value="Doors & Windows">Doors & Windows</option>
+              <option value="Other">Other / General Home Repair</option>
             </select>
 
             <label for="problem">Describe the problem in detail</label>
@@ -101,11 +111,11 @@
             <label for="otherSymptoms">Leaks, movement, temperature changes, damage, or other symptoms</label>
             <textarea id="otherSymptoms" rows="2" placeholder="Example: The cabinet floor feels soft near the pipe."></textarea>
 
-            <label class="upload-box" for="photoUpload">
+            <label class="upload-box" for="photoUpload" id="uploadBox">
               <span class="upload-icon">＋</span>
               <span>
                 <strong>Add photos</strong>
-                <small>Add up to 6 photos. Automatic AI photo analysis will be connected in a later version.</small>
+                <small>Click to select, or drag and drop up to 6 photos. Automatic AI photo analysis will be connected in a later version.</small>
               </span>
             </label>
             <input id="photoUpload" type="file" accept="image/*" multiple hidden />
@@ -130,7 +140,7 @@
             <div class="result-top">
               <span class="result-icon">🔧</span>
               <div>
-                <div class="eyebrow">FixWise response</div>
+                <div class="eyebrow">FixWise response <span id="modeBadge" class="mode-badge"></span></div>
                 <h3 id="resultTitle">Tell me what you're seeing.</h3>
               </div>
             </div>
@@ -151,7 +161,7 @@
             </p>
 
             <div id="mostLikelyCauses" style="display: none;" class="causes-section">
-              <h4>Most likely causes</h4>
+              <h4>Most likely causes <span id="confidenceBadge" class="confidence-badge"></span></h4>
               <ul id="mostLikelyList"></ul>
             </div>
 
@@ -163,6 +173,17 @@
             <div id="clarifyingSection" style="display: none;" class="causes-section">
               <h4>Questions that could narrow this down</h4>
               <ul id="clarifyingList"></ul>
+            </div>
+
+            <div id="followUpSection" class="followup-section" style="display: none;">
+              <h4>Answer a question to help narrow this down</h4>
+              <p class="followup-hint">
+                Add any extra detail — including an answer to one of the questions above — and FixWise will
+                refine this diagnosis using everything you've shared so far in this session.
+              </p>
+              <textarea id="followUpAnswer" rows="2" placeholder="Example: The leak is constant, even with the water off."></textarea>
+              <button type="button" class="btn secondary" id="submitFollowUp">Add detail &amp; refine diagnosis</button>
+              <ul id="conversationLog" class="conversation-log"></ul>
             </div>
 
             <div id="stepsSection" style="display: none;" class="causes-section">
