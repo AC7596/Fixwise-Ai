@@ -22,6 +22,8 @@
 // backend pieces required for a production AI diagnosis service.
 
 import { diagnosisDatabase } from '../data/diagnosis-data.js';
+import { classifyIntent, INTENT, INTENT_META, INTENTIONAL_ACTION_INTENTS, getIntentFollowUpQuestions } from '../data/intent-data.js';
+import { assessRisk, RISK_LEVEL, RISK_BADGE_LABEL } from '../data/safety-data.js';
 
 // ----------------------------------------------------------------------
 // CONFIG: how the backend URL is resolved (no secrets, GitHub-Pages-safe)
@@ -153,6 +155,22 @@ function estimateConfidence(filledFieldCount, matchedKeywordHits, hasFollowUp) {
   return { level: 'low', label: 'Low confidence — add more detail or answer a follow-up question to narrow this down' };
 }
 
+// Malfunction-signal words that suggest something is actually failing, even
+// when the sentence is primarily phrased as an intentional action (e.g.
+// "I want to replace my outlet because it sparks"). When these are present
+// alongside an intentional-action intent, FixWise treats it as a repair-
+// driven replacement rather than asking purely exploratory questions.
+const MALFUNCTION_SIGNAL_WORDS = [
+  'not working', "isn't working", 'broken', 'stopped working', 'failed', 'failing',
+  'spark', 'shock', 'burn', 'burning', 'smoke', 'trip', 'tripping', 'leak', 'leaking',
+  'drip', 'dripping', 'crack', 'cracked', 'won\'t', 'doesn\'t', 'no power', 'dead',
+  'loose', 'warm to the touch', 'hot to the touch', 'buzzing', 'humming', 'rattling'
+];
+
+function hasMalfunctionSignal(text) {
+  return MALFUNCTION_SIGNAL_WORDS.some(word => text.includes(word));
+}
+
 function localDemoDiagnosis({ category, problem, seen, heard, smell, otherSymptoms, conversationHistory }) {
   const categoryKey = (category || '').toLowerCase();
   const categoryData = diagnosisDatabase[categoryKey];
@@ -165,16 +183,82 @@ function localDemoDiagnosis({ category, problem, seen, heard, smell, otherSympto
   const fields = [problem, seen, heard, smell, otherSymptoms, followUpText].filter(Boolean);
   const combinedText = fields.join(' ').toLowerCase();
 
-  if (!categoryData || !combinedText.trim()) {
+  if (!combinedText.trim()) {
     return { matched: false, category };
   }
 
-  let hasDanger = false;
-  const dangerConfig = categoryData.dangers;
-  if (dangerConfig && dangerConfig.keywords) {
-    hasDanger = dangerConfig.keywords.some(kw => combinedText.includes(kw));
+  // ---- 1. Symptom-based risk assessment (independent of category/intent) ----
+  const risk = assessRisk(combinedText);
+  const hasDanger = risk.level === RISK_LEVEL.STOP || risk.level === RISK_LEVEL.HIGH;
+  const dangerConfig = risk.signals.length
+    ? {
+      message: risk.signals.map(s => s.message).join(' '),
+      badge: RISK_BADGE_LABEL[risk.level],
+      action: risk.signals.map(s => s.action).join(' '),
+      level: risk.level
+    }
+    : null;
+
+  // ---- 2. Intent classification: what is the homeowner trying to DO? ----
+  const intentResult = classifyIntent(combinedText);
+  const intent = intentResult ? intentResult.intent : null;
+  const intentMeta = intentResult ? intentResult.meta : null;
+
+  if (!categoryData) {
+    return { matched: false, category, intent, intentMeta, hasDanger, dangerConfig, riskLevel: risk.level };
   }
 
+  // A true emergency-level risk always takes priority: stop and surface the
+  // safety warning rather than any repair/replace guidance.
+  if (risk.level === RISK_LEVEL.STOP) {
+    return {
+      matched: true,
+      needsFollowUp: false,
+      isEmergency: true,
+      intent: INTENT.EMERGENCY,
+      intentMeta: INTENT_META[INTENT.EMERGENCY],
+      confidence: { level: 'high', label: 'High confidence this needs immediate professional/emergency attention' },
+      hasDanger: true,
+      dangerConfig,
+      riskLevel: risk.level,
+      issue: null,
+      category
+    };
+  }
+
+  // ---- 3. Does this look like an intentional action (replace/install/
+  // maintenance/inspection/upgrade/how-it-works) rather than a malfunction
+  // report? If so, and there's no malfunction language mixed in, FixWise
+  // should ask a clarifying question rather than assume a failure. This is
+  // the fix for "I want to replace my outlets" being treated like "my
+  // outlet isn't working".
+  const isIntentionalAction = intent && INTENTIONAL_ACTION_INTENTS.has(intent);
+  const mentionsMalfunction = hasMalfunctionSignal(combinedText);
+
+  // Shared shape for "ask a clarifying question instead of guessing" —
+  // used both when the intent itself signals an intentional action, and
+  // later when a recognized intent didn't match anything in the knowledge
+  // base, so the two cases can't silently drift apart.
+  const buildFollowUpResult = () => ({
+    matched: true,
+    needsFollowUp: true,
+    intent,
+    intentMeta,
+    confidence: { level: 'low', label: 'Not enough detail yet to give a specific recommendation' },
+    hasDanger,
+    dangerConfig,
+    riskLevel: risk.level,
+    clarifyingQuestions: getIntentFollowUpQuestions(categoryKey, intent),
+    category
+  });
+
+  if (isIntentionalAction && !mentionsMalfunction) {
+    return buildFollowUpResult();
+  }
+
+  // ---- 4. Malfunction / troubleshooting-style matching against the
+  // knowledge base (also used when an intentional action turned out to be
+  // driven by a described malfunction, e.g. "replacing a sparking outlet").
   let matchedIssue = null;
   let matchedKeywordHits = 0;
   if (categoryData.issues) {
@@ -189,15 +273,25 @@ function localDemoDiagnosis({ category, problem, seen, heard, smell, otherSympto
     }
   }
 
+  if (!matchedIssue && intent && !mentionsMalfunction) {
+    // Recognized an intent (repair/troubleshoot-shaped) but nothing in the
+    // knowledge base matched a specific known issue — ask rather than guess.
+    return buildFollowUpResult();
+  }
+
   const confidence = matchedIssue
     ? estimateConfidence(fields.length, matchedKeywordHits, Boolean(conversationHistory && conversationHistory.length))
     : null;
 
   return {
     matched: Boolean(matchedIssue),
+    needsFollowUp: false,
+    intent: intent || INTENT.TROUBLESHOOT,
+    intentMeta: intentMeta || INTENT_META[INTENT.TROUBLESHOOT],
     confidence,
     hasDanger,
     dangerConfig,
+    riskLevel: risk.level,
     issue: matchedIssue,
     category
   };

@@ -4,6 +4,7 @@
 import { repairGuides, getCategories } from '../data/guides-data.js';
 import { getLevelBySlug } from '../data/levels.js';
 import { escapeHtml } from '../utils/html.js';
+import { openRepairMode } from './repair-mode.js';
 
 let activeCategory = 'All';
 let searchTerm = '';
@@ -72,6 +73,13 @@ function renderGuides() {
       btn.textContent = expanded ? 'View full guide' : 'Hide full guide';
     });
   });
+
+  grid.querySelectorAll('.guide-start-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const guide = repairGuides.find(g => g.id === btn.dataset.id);
+      if (guide) openRepairMode(guide);
+    });
+  });
 }
 
 function guideCardHtml(guide) {
@@ -86,14 +94,20 @@ function guideCardHtml(guide) {
         <span>${escapeHtml(guide.time)}</span>
         <span class="result-badge${level ? ` ${level.className}` : ''}">${level ? level.label : '—'}</span>
       </div>
-      <button type="button" class="btn secondary full guide-toggle" aria-expanded="false" aria-controls="guide-detail-${escapeHtml(guide.id)}">View full guide</button>
+      <div class="guide-card-actions">
+        <button type="button" class="btn secondary full guide-toggle" aria-expanded="false" aria-controls="guide-detail-${escapeHtml(guide.id)}">View full guide</button>
+        <button type="button" class="btn primary full guide-start-btn" data-id="${escapeHtml(guide.id)}">Guide me through it</button>
+      </div>
       <div class="guide-detail" id="guide-detail-${escapeHtml(guide.id)}" style="display:none">
+        ${guide.overview ? section('Overview', `<p>${escapeHtml(guide.overview)}</p>`) : ''}
         ${section('Possible causes', listHtml(guide.causes))}
         ${section('Tools needed', listHtml(guide.tools))}
         ${section('Parts / materials', listHtml(guide.parts))}
         ${section('Safety warnings', listHtml(guide.safety), 'guide-safety')}
         ${section('Step-by-step', listHtml(guide.steps, true))}
+        ${section('Common mistakes to avoid', listHtml(guide.commonMistakes))}
         ${section('Helpful tips', listHtml(guide.tips))}
+        ${guide.verification ? section('Verify the repair worked', `<p>${escapeHtml(guide.verification)}</p>`) : ''}
         ${guide.stopWhen ? section('Stop and call a professional if', `<p>${escapeHtml(guide.stopWhen)}</p>`, 'guide-stop') : ''}
         ${guide.callPro ? section('When to call a professional', `<p>${escapeHtml(guide.callPro)}</p>`) : ''}
       </div>

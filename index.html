@@ -146,15 +146,18 @@
             </div>
 
             <div id="dangerWarning" class="danger-warning" style="display: none;">
-              <div class="warning-header">
-                <span class="warning-icon">⚠️</span>
-                <strong id="warningTitle">Safety Alert</strong>
-              </div>
-              <p id="warningText"></p>
-              <div class="warning-actions">
-                <span class="warning-badge" id="warningBadge"></span>
+              <div class="warning-icon-col" aria-hidden="true"><span class="warning-icon">⚠️</span></div>
+              <div class="warning-body">
+                <strong id="warningTitle" class="warning-title">Safety Alert</strong>
+                <p id="warningText"></p>
+                <p id="warningAction" class="warning-action"></p>
+                <div class="warning-actions">
+                  <span class="warning-badge" id="warningBadge"></span>
+                </div>
               </div>
             </div>
+
+            <p id="intentText" class="intent-line" style="display:none;"></p>
 
             <p id="resultText">
               Enter a repair problem and press Analyze problem. This demo will show how the future AI diagnosis flow can respond.
@@ -248,9 +251,20 @@
     <section class="section kids" id="kids">
       <div class="container kids-grid">
         <div class="fixy-card" aria-label="Fixy mascot preview">
-          <div class="fixy-face">
-            <div class="fixy-eyes"><span></span><span></span></div>
-            <div class="fixy-smile"></div>
+          <!--
+            FIXY MASCOT — placeholder presentation.
+            This wrapper (.fixy-avatar) is the single hook point for a future
+            professionally designed mascot: swap the .fixy-face div below for
+            an <img>/<svg>/animation inside .fixy-avatar and set
+            data-fixy-mood to drive expression changes — no other markup or
+            JS needs to change (see js/data/fixy-messages.js for the message
+            content driving Fixy's reactions).
+          -->
+          <div class="fixy-avatar" data-fixy-mood="idle">
+            <div class="fixy-face">
+              <div class="fixy-eyes"><span></span><span></span></div>
+              <div class="fixy-smile"></div>
+            </div>
           </div>
           <div class="fixy-badge">FIXY</div>
           <p id="fixySpeech">"I don't know yet — let's figure it out!"</p>
@@ -277,16 +291,28 @@
           <div class="kids-roadmap">
             <h3>Coming soon to FixWise Kids</h3>
             <div class="roadmap-chips">
-              <span>Parent-linked repair activities</span>
+              <span>More parent-linked repair activities</span>
               <span>Fixy learning adventures</span>
-              <span>Levels &amp; badges</span>
-              <span>Progress tracking</span>
               <span>Tool-learning games</span>
-              <span>Measurement activities</span>
               <span>Money &amp; repair-cost lessons</span>
               <span>Animated Fixy content</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      <div class="container">
+        <div class="kids-activities" id="kidsActivities">
+          <div class="kids-activities-header">
+            <div>
+              <div class="eyebrow">Junior Helper activities</div>
+              <h3 id="kidsActivityHeading">Try a sample activity</h3>
+              <p id="kidsActivitySub" class="kids-activity-sub"></p>
+              <div id="kidsSetPicker" class="filter-bar kids-set-picker"></div>
+            </div>
+            <div class="kid-progress-panel" id="kidsProgress"></div>
+          </div>
+          <div id="kidsActivityBody" class="kids-activity-body"></div>
         </div>
       </div>
     </section>
