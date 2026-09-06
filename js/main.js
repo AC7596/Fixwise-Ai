@@ -6,9 +6,13 @@ import { initPhotoUpload } from './modules/photo-upload.js';
 import { initDiagnosisForm } from './modules/diagnosis.js';
 import { initGuides } from './modules/guides.js';
 import { initFixy } from './modules/kids.js';
+import { initKidsActivities } from './modules/kids-activities.js';
+import { initRepairMode } from './modules/repair-mode.js';
 
 initNav();
 initPhotoUpload({ inputId: 'photoUpload', previewGridId: 'photoPreviewGrid', errorId: 'photoError', countLabelId: 'photoCountLabel', dropZoneId: 'uploadBox' });
 initDiagnosisForm();
 initGuides();
 initFixy();
+initKidsActivities();
+initRepairMode();
