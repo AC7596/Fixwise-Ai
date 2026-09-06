@@ -136,9 +136,11 @@ export const repairGuides = [
         ],
         unsure: [
           { instruction: 'Remove the handle and take a clear photo of the mechanism underneath before going further.', explanation: 'A photo lets you compare against faucet-type references or show a hardware store associate for an exact match.', tools: ['Screwdriver'] },
-          { instruction: 'Look for a single cartridge cylinder, two separate stems, a wide ceramic disc cylinder, or a rounded ball with springs.', explanation: 'This visual check usually reveals the type even without prior knowledge.', troubleshoot: { question: 'Still can\'t tell?', help: 'Bring the photo (or the faucet brand/model if visible) to a hardware store or plumber — guessing and forcing the wrong repair approach can damage the faucet body.' } }
+          { instruction: 'Look for a single cartridge cylinder, two separate stems, a wide ceramic disc cylinder, or a rounded ball with springs.', explanation: 'This visual check usually reveals the type even without prior knowledge.', troubleshoot: { question: 'Still can\'t tell?', help: 'Bring the photo (or the faucet brand/model if visible) to a hardware store or plumber — guessing and forcing the wrong repair approach can damage the faucet body.' } },
+          { instruction: 'Once you\'ve identified the type, restart "Guide me through it" and choose that faucet type to continue the repair.', explanation: 'Each faucet type needs a different procedure from here, so this path stops at identification rather than guessing.' }
         ]
       },
+      nonRepairVariants: ['unsure'],
       finalSteps: [
         { instruction: 'Reassemble the handle and any decorative caps.', explanation: 'Reversing the disassembly order usually works well.' },
         { instruction: 'Turn the shutoff valves back on slowly, watching connections for drips.', explanation: 'Opening valves slowly avoids water-hammer noise and lets you catch leaks early.', safetyNote: 'If a connection sprays, shut the valve back off immediately and check the fitting.' },

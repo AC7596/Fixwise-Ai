@@ -142,6 +142,23 @@ export const RISK_SIGNALS = [
 ];
 
 /**
+ * Escapes regex special characters in a plain keyword/phrase.
+ */
+function escapeRegExp(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Whole-word/phrase match: guards against substrings matching inside an
+ * unrelated longer word (e.g. the "fire" signal should not fire on
+ * "fireplace" or "firearm"). Uses \b word boundaries around the phrase.
+ */
+function matchesKeyword(normalizedText, keyword) {
+  const pattern = new RegExp(`\\b${escapeRegExp(keyword)}\\b`, 'i');
+  return pattern.test(normalizedText);
+}
+
+/**
  * Scan free text for known risk signals and return the highest-severity
  * match (plus all matches, for reference). Returns RISK_LEVEL.NONE with no
  * signals if nothing concerning was mentioned — an ordinary "replace my
@@ -151,7 +168,7 @@ export const RISK_SIGNALS = [
  */
 export function assessRisk(text) {
   const normalized = (text || '').toLowerCase();
-  const matched = RISK_SIGNALS.filter(signal => signal.keywords.some(kw => normalized.includes(kw)));
+  const matched = RISK_SIGNALS.filter(signal => signal.keywords.some(kw => matchesKeyword(normalized, kw)));
 
   if (!matched.length) return { level: RISK_LEVEL.NONE, signals: [] };
 

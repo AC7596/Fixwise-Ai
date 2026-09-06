@@ -91,7 +91,10 @@ function closeRepairMode() {
 function insertVariantSteps(value) {
   const { guide, flow, index } = state;
   const variantSteps = (guide.interactive.variantSteps[value] || []).map(s => ({ kind: 'step', ...s }));
-  const finalSteps = (guide.interactive.finalSteps || []).map(s => ({ kind: 'step', ...s }));
+  // Skip the "verify the repair worked" closing steps for a path that never actually
+  // performs the repair (e.g. "I'm not sure yet" ends in identifying the part / calling a pro).
+  const skipFinal = guide.interactive.nonRepairVariants?.includes(value);
+  const finalSteps = skipFinal ? [] : (guide.interactive.finalSteps || []).map(s => ({ kind: 'step', ...s }));
   flow.splice(index + 1, 0, ...variantSteps, ...finalSteps);
   state.variantChosen = value;
   updateStepProgress({ variant: value, totalSteps: flow.length });
@@ -212,13 +215,17 @@ function goNext() {
 function renderComplete(body) {
   completeSession();
   refreshKidsForActiveSession();
-  const message = getFixyMessage(FIXY_CONTEXT.SOLVED_PROBLEM);
+  const wasNonRepairPath = state.guide.interactive?.nonRepairVariants?.includes(state.variantChosen);
+  const message = getFixyMessage(wasNonRepairPath ? FIXY_CONTEXT.LEARNED_TOOL : FIXY_CONTEXT.SOLVED_PROBLEM);
+  const heading = wasNonRepairPath ? 'Good detective work — you found what you needed to know.' : "Nice work — that's the full repair!";
   body.innerHTML = `
     <div class="repair-complete">
-      <div class="repair-complete-icon">🎉</div>
-      <h3>Nice work — that's the full repair!</h3>
+      <div class="repair-complete-icon">${wasNonRepairPath ? '🔍' : '🎉'}</div>
+      <h3>${escapeHtml(heading)}</h3>
       <p class="kid-fixy-line">🔧 Fixy says: "${escapeHtml(message)}"</p>
-      ${state.guide.verification ? `<p><strong>Verify it worked:</strong> ${escapeHtml(state.guide.verification)}</p>` : ''}
+      ${wasNonRepairPath
+        ? '<p>Now that you know the faucet type, come back and choose it in "Guide me through it" to finish the repair.</p>'
+        : (state.guide.verification ? `<p><strong>Verify it worked:</strong> ${escapeHtml(state.guide.verification)}</p>` : '')}
       ${state.guide.callPro ? `<p class="professional-note"><strong>Still not right?</strong> ${escapeHtml(state.guide.callPro)}</p>` : ''}
       <div class="repair-step-actions">
         <button type="button" class="btn secondary" id="repairCloseComplete">Close</button>

@@ -235,20 +235,25 @@ function localDemoDiagnosis({ category, problem, seen, heard, smell, otherSympto
   const isIntentionalAction = intent && INTENTIONAL_ACTION_INTENTS.has(intent);
   const mentionsMalfunction = hasMalfunctionSignal(combinedText);
 
+  // Shared shape for "ask a clarifying question instead of guessing" —
+  // used both when the intent itself signals an intentional action, and
+  // later when a recognized intent didn't match anything in the knowledge
+  // base, so the two cases can't silently drift apart.
+  const buildFollowUpResult = () => ({
+    matched: true,
+    needsFollowUp: true,
+    intent,
+    intentMeta,
+    confidence: { level: 'low', label: 'Not enough detail yet to give a specific recommendation' },
+    hasDanger,
+    dangerConfig,
+    riskLevel: risk.level,
+    clarifyingQuestions: getIntentFollowUpQuestions(categoryKey, intent),
+    category
+  });
+
   if (isIntentionalAction && !mentionsMalfunction) {
-    const questions = getIntentFollowUpQuestions(categoryKey, intent);
-    return {
-      matched: true,
-      needsFollowUp: true,
-      intent,
-      intentMeta,
-      confidence: { level: 'low', label: 'Not enough detail yet to give a specific recommendation' },
-      hasDanger,
-      dangerConfig,
-      riskLevel: risk.level,
-      clarifyingQuestions: questions,
-      category
-    };
+    return buildFollowUpResult();
   }
 
   // ---- 4. Malfunction / troubleshooting-style matching against the
@@ -271,19 +276,7 @@ function localDemoDiagnosis({ category, problem, seen, heard, smell, otherSympto
   if (!matchedIssue && intent && !mentionsMalfunction) {
     // Recognized an intent (repair/troubleshoot-shaped) but nothing in the
     // knowledge base matched a specific known issue — ask rather than guess.
-    const questions = getIntentFollowUpQuestions(categoryKey, intent);
-    return {
-      matched: true,
-      needsFollowUp: true,
-      intent,
-      intentMeta,
-      confidence: { level: 'low', label: 'Not enough detail yet to give a specific recommendation' },
-      hasDanger,
-      dangerConfig,
-      riskLevel: risk.level,
-      clarifyingQuestions: questions.length ? questions : (categoryData.issues ? [] : []),
-      category
-    };
+    return buildFollowUpResult();
   }
 
   const confidence = matchedIssue
