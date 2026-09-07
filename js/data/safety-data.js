@@ -92,10 +92,14 @@ export const RISK_SIGNALS = [
     id: 'carbon-dioxide',
     level: RISK_LEVEL.CAUTION,
     // Carbon dioxide (CO2) build-up is a real but much lower-urgency air-
-    // quality concern than carbon monoxide (CO) — it should never be
-    // classified as the CO emergency above just because "CO" is a substring
-    // of "CO2". Handled separately at CAUTION unless other STOP-level
-    // symptoms (e.g. actual CO alarm language) are also present.
+    // quality concern than carbon monoxide (CO). The whole-word matcher
+    // above already stops "co2" from accidentally matching the "co alarm"/
+    // "co detector" keywords, but this signal is kept fully separate (its
+    // own disjoint keyword list, its own lower CAUTION level) as defense in
+    // depth — so CO2 language can never be classified as the CO emergency
+    // even if the CO keyword list changes in the future. Other STOP-level
+    // symptoms (e.g. actual CO alarm language) mentioned in the same text
+    // still independently trigger the carbon-monoxide signal above.
     keywords: ['carbon dioxide', 'co2 alarm', 'co2 detector', 'co2 levels', 'co2 build up', 'co2 buildup'],
     title: 'Carbon dioxide (CO2) alert',
     message: 'Carbon dioxide build-up can cause headaches, drowsiness, or poor air quality, but it is a different hazard than carbon monoxide (CO) and is not immediately life-threatening at typical household levels.',
