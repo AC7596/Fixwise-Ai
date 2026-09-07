@@ -8,6 +8,7 @@ import { initGuides } from './modules/guides.js';
 import { initFixy } from './modules/kids.js';
 import { initKidsActivities } from './modules/kids-activities.js';
 import { initRepairMode } from './modules/repair-mode.js';
+import { initChronicleTips } from './modules/chronicle.js';
 
 initNav();
 initPhotoUpload({ inputId: 'photoUpload', previewGridId: 'photoPreviewGrid', errorId: 'photoError', countLabelId: 'photoCountLabel', dropZoneId: 'uploadBox' });
@@ -16,3 +17,4 @@ initGuides();
 initFixy();
 initKidsActivities();
 initRepairMode();
+initChronicleTips();

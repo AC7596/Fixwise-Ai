@@ -26,22 +26,32 @@
 // }
 
 const SESSION_KEY = 'fixwiseRepairSession';
+const HISTORY_KEY = 'fixwiseRepairSessionHistory';
 
 function nowIso() {
   return new Date().toISOString();
 }
 
+function getStorage() {
+  if (typeof window === 'undefined' || !window.localStorage) return null;
+  return window.localStorage;
+}
+
 function safeStorageGet(key) {
+  const storage = getStorage();
+  if (!storage) return null;
   try {
-    return window.localStorage.getItem(key);
+    return storage.getItem(key);
   } catch (err) {
     return null;
   }
 }
 
 function safeStorageSet(key, value) {
+  const storage = getStorage();
+  if (!storage) return;
   try {
-    window.localStorage.setItem(key, value);
+    storage.setItem(key, value);
   } catch (err) {
     // Storage unavailable (privacy mode, quota, etc.) — session just won't
     // persist across reloads, but the current page view still works.
@@ -89,28 +99,36 @@ export function startSession({ guideId, title, category, difficulty, safetyLevel
     childActivities: { completedIds: [] },
     fixyLog: []
   };
-  return persist(session);
+  const persisted = persist(session);
+  appendSessionToHistory(persisted);
+  return persisted;
 }
 
 export function updateStepProgress(patch) {
   const session = getSession();
   if (!session) return null;
   session.stepProgress = { ...session.stepProgress, ...patch };
-  return persist(session);
+  const persisted = persist(session);
+  appendSessionToHistory(persisted);
+  return persisted;
 }
 
 export function completeSession() {
   const session = getSession();
   if (!session) return null;
   session.stepProgress.status = 'completed';
-  return persist(session);
+  const persisted = persist(session);
+  appendSessionToHistory(persisted);
+  return persisted;
 }
 
 export function logFixyMessage(context, message) {
   const session = getSession();
   if (!session) return null;
   session.fixyLog = [...(session.fixyLog || []), { context, message, timestamp: nowIso() }].slice(-20);
-  return persist(session);
+  const persisted = persist(session);
+  appendSessionToHistory(persisted);
+  return persisted;
 }
 
 export function markChildActivityComplete(activityId) {
@@ -119,15 +137,120 @@ export function markChildActivityComplete(activityId) {
   const completed = new Set(session.childActivities?.completedIds || []);
   completed.add(activityId);
   session.childActivities = { completedIds: Array.from(completed) };
-  return persist(session);
+  const persisted = persist(session);
+  appendSessionToHistory(persisted);
+  return persisted;
 }
 
 export function clearSession() {
+  const storage = getStorage();
+  if (!storage) return;
   try {
-    window.localStorage.removeItem(SESSION_KEY);
+    storage.removeItem(SESSION_KEY);
   } catch (err) {
     // Ignore — nothing persisted to clear.
   }
+}
+
+export function getSessionHistory() {
+  const raw = safeStorageGet(HISTORY_KEY);
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (err) {
+    return [];
+  }
+}
+
+export function writeSessionHistory(history) {
+  const next = Array.isArray(history) ? history.slice(0, 25) : [];
+  safeStorageSet(HISTORY_KEY, JSON.stringify(next));
+  return next;
+}
+
+export function appendSessionToHistory(session) {
+  if (!session) return getSessionHistory();
+  const history = getSessionHistory();
+  const existingIndex = history.findIndex(item => item.sessionId === session.sessionId);
+  const nextEntry = {
+    ...session,
+    reviewedAt: nowIso()
+  };
+  const next = [...history];
+  if (existingIndex >= 0) next[existingIndex] = nextEntry;
+  else next.unshift(nextEntry);
+  return writeSessionHistory(next);
+}
+
+export function summarizeUsagePatterns(sessions = getSessionHistory()) {
+  const items = Array.isArray(sessions) ? sessions : [];
+  const categoryCounts = {};
+  let completed = 0;
+  let inProgress = 0;
+
+  for (const session of items) {
+    const category = session.parentRepair?.category || 'General';
+    categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+    const status = session.stepProgress?.status || 'in-progress';
+    if (status === 'completed') completed += 1;
+    else inProgress += 1;
+  }
+
+  const topCategory = Object.entries(categoryCounts).sort((a, b) => b[1] - a[1])[0];
+  return {
+    totalSessions: items.length,
+    completed,
+    inProgress,
+    categoryCounts,
+    topCategory: topCategory ? topCategory[0] : null,
+    topCategoryCount: topCategory ? topCategory[1] : 0,
+    completionRate: items.length ? (completed / items.length) * 100 : 0
+  };
+}
+
+export function getPersonalizedTips(sessions = getSessionHistory()) {
+  const pattern = summarizeUsagePatterns(sessions);
+  const tips = [];
+
+  if (!pattern.totalSessions) {
+    return [
+      'Start a few small repair sessions so Chronicle can learn your most common categories and build tailored advice.',
+      'Keep a photo of the issue before disassembly to make each repair easier and safer.'
+    ];
+  }
+
+  if (pattern.topCategory) {
+    const categoryTips = {
+      Plumbing: 'Keep a drain snake, plumber’s tape, and a bucket ready for quick sink and pipe checks.',
+      Electrical: 'Keep a flashlight, voltage tester, and a clear list of circuit labels handy before you start.',
+      'Heating & Cooling': 'Keep a thermostat check and filter inspection as part of your routine maintenance pass.',
+      Appliance: 'Document the exact symptom and model number before you remove panels or try a component swap.',
+      'Doors & Windows': 'Carry a small level and a quick photo of the gap so you can compare before and after.',
+      Structural: 'Take photos of cracks and moisture changes so you can track whether the issue is spreading.',
+      'Automotive / Home Equipment': 'Keep a clean work area and a checklist of tools before you begin any equipment repair.',
+      'Other': 'Build a simple problem-and-solution log so recurring issues are easier to spot.'
+    };
+
+    const suggestion = categoryTips[pattern.topCategory] || 'Stay consistent with a basic prep checklist so your next repair is safer and faster.';
+    tips.push(`Your recent repair history leans toward ${pattern.topCategory}. ${suggestion}`);
+  }
+
+  if (pattern.completionRate >= 60) {
+    tips.push('You finish many repair sessions cleanly; keep a “before photo + tool list” habit to make each next fix even smoother.');
+  } else {
+    tips.push('You often pause before the final step. Try documenting the exact symptom, safety warning, and the first thing you checked before resuming.');
+  }
+
+  if (pattern.inProgress > 0) {
+    tips.push('Your history suggests a few sessions stop mid-stream. A quick photo and a short note about what changed often helps you restart without guesswork.');
+  }
+
+  if (pattern.topCategoryCount > 1) {
+    tips.push(`You revisit ${pattern.topCategory} more than once. Save a reusable checklist for that category so your next session starts from a proven pattern.`);
+  }
+
+  return tips.slice(0, 4);
 }
 
 /**

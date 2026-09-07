@@ -7,6 +7,7 @@ import { getLevelBySlug } from '../data/levels.js';
 import { escapeHtml } from '../utils/html.js';
 import { repairGuides } from '../data/guides-data.js';
 import { openRepairMode } from './repair-mode.js';
+import { appendSessionToHistory } from './repair-session.js';
 
 const els = {};
 
@@ -331,6 +332,31 @@ export function initDiagnosisForm() {
       ]);
       session.lastDiagnosis = diagnosis;
       saveSession();
+      const historyEntry = {
+        sessionId: `diagnosis-${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        parentRepair: {
+          guideId: diagnosis.relatedGuideId || null,
+          title: diagnosis.issue?.title || session.problem || 'Diagnosis session',
+          category: session.category || diagnosis.category || 'General',
+          difficulty: diagnosis.issue?.difficulty || null,
+          safetyLevel: diagnosis.hasDanger ? (diagnosis.riskLevel || 'caution') : 'low'
+        },
+        diagnosis,
+        stepProgress: {
+          currentIndex: diagnosis.issue?.steps?.length ? Math.min(diagnosis.issue.steps.length, 1) : 0,
+          totalSteps: diagnosis.issue?.steps?.length || 0,
+          variant: null,
+          status: diagnosis.needsFollowUp ? 'in-progress' : 'completed'
+        },
+        tools: diagnosis.issue?.tools || [],
+        parts: diagnosis.issue?.parts || [],
+        photos: photos.map(photo => photo.name || 'photo'),
+        childActivities: { completedIds: [] },
+        fixyLog: []
+      };
+      appendSessionToHistory(historyEntry);
       renderResults(diagnosis, photoResult);
       els.resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     } catch (err) {
