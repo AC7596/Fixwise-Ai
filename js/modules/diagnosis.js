@@ -57,7 +57,7 @@ function cacheEls() {
   const ids = [
     'diagnosisForm', 'category', 'problem', 'seen', 'heard', 'smell', 'otherSymptoms',
     'resultCard', 'resultTitle', 'resultText', 'resultState', 'modeBadge', 'confidenceBadge',
-    'dangerWarning', 'warningTitle', 'warningText', 'warningBadge',
+    'dangerWarning', 'warningTitle', 'warningText', 'warningAction', 'warningBadge', 'intentText',
     'mostLikelyCauses', 'mostLikelyList',
     'otherCausesSection', 'otherCausesList',
     'clarifyingSection', 'clarifyingList',
@@ -87,9 +87,10 @@ function setListOrHide(sectionEl, listEl, items) {
 function resetResultSections() {
   ['dangerWarning', 'mostLikelyCauses', 'otherCausesSection', 'clarifyingSection',
     'followUpSection', 'stepsSection', 'toolsSection', 'partsSection', 'tipsSection', 'stopSection',
-    'professionalNote', 'photoNote'].forEach(key => {
+    'professionalNote', 'photoNote', 'intentText'].forEach(key => {
     if (els[key]) els[key].style.display = 'none';
   });
+  if (els.dangerWarning) els.dangerWarning.className = 'danger-warning';
   if (els.confidenceBadge) {
     els.confidenceBadge.textContent = '';
     els.confidenceBadge.className = 'confidence-badge';
@@ -142,6 +143,33 @@ function renderLevelBadge(el, slug) {
   el.className = 'result-badge' + (level ? ` ${level.className}` : '');
 }
 
+function renderIntentLine(diagnosis) {
+  if (!els.intentText) return;
+  if (!diagnosis.intentMeta) {
+    els.intentText.style.display = 'none';
+    return;
+  }
+  els.intentText.style.display = 'block';
+  els.intentText.innerHTML = `<strong>What FixWise understands:</strong> Based on what you've described, ${escapeHtml(diagnosis.intentMeta.understanding)}.`;
+}
+
+function renderDangerWarning(diagnosis) {
+  if (!diagnosis.hasDanger || !diagnosis.dangerConfig) {
+    els.dangerWarning.style.display = 'none';
+    return;
+  }
+  const level = diagnosis.dangerConfig.level || diagnosis.riskLevel || 'high';
+  els.dangerWarning.style.display = 'flex';
+  els.dangerWarning.className = `danger-warning risk-${level}`;
+  els.warningTitle.textContent = level === 'stop' ? 'STOP — Safety Alert' : (level === 'caution' ? 'Use Caution' : 'Safety Alert');
+  els.warningText.textContent = diagnosis.dangerConfig.message;
+  if (els.warningAction) {
+    els.warningAction.textContent = diagnosis.dangerConfig.action || '';
+    els.warningAction.style.display = diagnosis.dangerConfig.action ? 'block' : 'none';
+  }
+  els.warningBadge.textContent = diagnosis.dangerConfig.badge;
+}
+
 function renderResults(diagnosis, photoResult) {
   els.resultCard.classList.remove('is-loading');
   resetResultSections();
@@ -156,17 +184,54 @@ function renderResults(diagnosis, photoResult) {
     return;
   }
 
-  const { hasDanger, dangerConfig, issue, category } = diagnosis;
+  renderDangerWarning(diagnosis);
+  renderIntentLine(diagnosis);
 
-  if (hasDanger && dangerConfig) {
-    els.dangerWarning.style.display = 'flex';
-    els.warningTitle.textContent = 'Safety Alert';
-    els.warningText.textContent = dangerConfig.message;
-    els.warningBadge.textContent = dangerConfig.badge;
+  const { issue, category } = diagnosis;
+
+  // ---- Emergency: show the stop warning as the whole story ----
+  if (diagnosis.isEmergency) {
+    els.resultTitle.textContent = 'This may need immediate attention';
+    els.resultText.textContent = 'Based on what you\'ve described, this looks like a safety hazard rather than a routine repair question. Please follow the safety alert above before doing anything else.';
+    els.nextCheck.textContent = 'Follow the safety alert above';
+    els.diyLevel.textContent = 'Do not DIY';
+    els.diyLevel.className = 'result-badge level-emergency';
+    els.safetyLevel.textContent = 'Stop immediately';
+    els.estimatedTime.textContent = 'N/A';
+    return;
   }
 
-  els.resultTitle.textContent = `${category} diagnosis`;
-  els.resultText.textContent = `Based on what you described, here is FixWise's informational guidance for this ${category.toLowerCase()} issue. This is not a guaranteed diagnosis — use it as a starting point.`;
+  // ---- Needs follow-up: not enough info to give a specific recommendation,
+  // so ask rather than guess (see intent-data.js) ----
+  if (diagnosis.needsFollowUp) {
+    els.resultTitle.textContent = `Let's narrow this down`;
+    els.resultText.textContent = `Based on what you've described, FixWise doesn't have enough detail yet to give a specific, useful recommendation. One of the questions below can help — add an answer in the box below and FixWise will refine its response.`;
+    setListOrHide(els.clarifyingSection, els.clarifyingList, diagnosis.clarifyingQuestions);
+    if (els.followUpSection) {
+      els.followUpSection.style.display = 'block';
+      renderConversationLog();
+    }
+    els.nextCheck.textContent = 'Answer a question below';
+    els.diyLevel.textContent = '—';
+    els.safetyLevel.textContent = diagnosis.hasDanger ? 'See safety alert' : 'Depends on your answer';
+    els.estimatedTime.textContent = '—';
+    return;
+  }
+
+  // ---- Matched but no specific knowledge-base entry ----
+  if (!issue) {
+    els.resultTitle.textContent = 'No specific match yet';
+    els.resultText.textContent = 'I didn\'t find a strong match. Try adding more detail about what you see, hear, smell, or notice.';
+    els.nextCheck.textContent = 'Add more details';
+    els.diyLevel.textContent = '—';
+    els.safetyLevel.textContent = '—';
+    els.estimatedTime.textContent = '—';
+    return;
+  }
+
+  const introVerb = diagnosis.intent === 'repair' ? 'repair' : (diagnosis.intent === 'replace' ? 'replacement' : 'issue');
+  els.resultTitle.textContent = `${category} ${introVerb === 'issue' ? 'diagnosis' : introVerb} guidance`;
+  els.resultText.textContent = `Based on what you've described, here is FixWise's informational guidance for this ${category.toLowerCase()} ${introVerb}. One possible cause is listed first below — this is not a guaranteed diagnosis, so use it as a starting point.`;
 
   setListOrHide(els.mostLikelyCauses, els.mostLikelyList, issue.causes);
   if (diagnosis.confidence && els.confidenceBadge) {
