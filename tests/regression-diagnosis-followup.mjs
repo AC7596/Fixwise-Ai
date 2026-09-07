@@ -26,6 +26,7 @@ await check('"My CO2 alarm is going off" (Electrical) never dead-ends and offers
   const r = await diagnoseProblem({ ...baseRequest, category: 'Electrical', problem: 'My CO2 alarm is going off' });
   assert.equal(r.matched, true, 'should not be a flat "no match" dead end');
   assert.equal(r.needsFollowUp, true, 'should ask rather than guess');
+  assert.equal(r.recognized, true, 'a real (if lower-severity) risk signal was identified, so this is not "genuinely unknown"');
   assert.equal(r.isEmergency, undefined, 'CO2 alone must never be treated as the CO emergency');
   assert.equal(r.riskLevel, 'caution');
   assert.ok(r.clarifyingQuestions && r.clarifyingQuestions.length > 0, 'must offer a useful follow-up question');
@@ -115,6 +116,7 @@ await check('Genuinely unrecognizable input gets an honest "figure it out togeth
   const r = await diagnoseProblem({ ...baseRequest, category: 'Other', problem: 'xyz zzz qqq' });
   assert.equal(r.matched, true);
   assert.equal(r.needsFollowUp, true);
+  assert.equal(r.recognized, false, 'nothing specific was identified, unlike the CO2 case above');
   assert.ok(r.clarifyingQuestions && r.clarifyingQuestions.length > 0);
 });
 

@@ -288,7 +288,6 @@ function localDemoDiagnosis({ category, problem, seen, heard, smell, otherSympto
       matched: true,
       needsFollowUp: true,
       recognized,
-      unknown: !recognized,
       intent,
       intentMeta,
       confidence: { level: 'low', label: 'Not enough detail yet to give a specific recommendation' },
