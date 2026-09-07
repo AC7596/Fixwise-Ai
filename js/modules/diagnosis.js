@@ -94,6 +94,7 @@ function resetResultSections() {
     if (els[key]) els[key].style.display = 'none';
   });
   if (els.dangerWarning) els.dangerWarning.className = 'danger-warning';
+  if (els.guideMeThroughIt) delete els.guideMeThroughIt.dataset.guideId;
   if (els.confidenceBadge) {
     els.confidenceBadge.textContent = '';
     els.confidenceBadge.className = 'confidence-badge';
