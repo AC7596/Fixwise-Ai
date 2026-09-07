@@ -23,7 +23,7 @@
 
 import { diagnosisDatabase } from '../data/diagnosis-data.js';
 import { classifyIntent, INTENT, INTENT_META, INTENTIONAL_ACTION_INTENTS, getIntentFollowUpQuestions } from '../data/intent-data.js';
-import { assessRisk, RISK_LEVEL, RISK_BADGE_LABEL } from '../data/safety-data.js';
+import { assessRisk, RISK_LEVEL, RISK_BADGE_LABEL, matchesKeyword } from '../data/safety-data.js';
 
 // ----------------------------------------------------------------------
 // CONFIG: how the backend URL is resolved (no secrets, GitHub-Pages-safe)
@@ -168,7 +168,11 @@ const MALFUNCTION_SIGNAL_WORDS = [
 ];
 
 function hasMalfunctionSignal(text) {
-  return MALFUNCTION_SIGNAL_WORDS.some(word => text.includes(word));
+  // Whole-word/phrase matching (shared with safety-data.js) — plain
+  // substring checks would false-positive on words like "spark" matching
+  // inside "sparkling", "trip" inside "triple", "dead" inside "deadline",
+  // "crack" inside "crackers", or "loose" inside "moose".
+  return MALFUNCTION_SIGNAL_WORDS.some(word => matchesKeyword(text, word));
 }
 
 function localDemoDiagnosis({ category, problem, seen, heard, smell, otherSymptoms, conversationHistory }) {

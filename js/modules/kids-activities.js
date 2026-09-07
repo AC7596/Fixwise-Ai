@@ -167,7 +167,8 @@ function shuffle(arr) {
 
 function onCorrect(activity, totalInSet) {
   const set = getActivitySet(currentSetId);
-  const progress = awardActivity(activity.id, activity.badge, set.activities.length, countCompletedInSet(set));
+  const setActivityIds = set.activities.map(a => a.id);
+  const progress = awardActivity(activity.id, activity.badge, setActivityIds);
   renderProgress();
   const feedback = document.getElementById('kidFeedback');
   const message = getFixyMessage(FIXY_CONTEXT.SOLVED_PROBLEM);
@@ -189,11 +190,6 @@ function onIncorrect() {
     feedback.textContent = `Not quite — Fixy: "${message}" Try again!`;
     feedback.className = 'kid-feedback is-incorrect';
   }
-}
-
-function countCompletedInSet(set) {
-  const progress = getProgress();
-  return set.activities.filter(a => progress.completedActivityIds.includes(a.id)).length + 1;
 }
 
 function wireActivity(activity, total) {

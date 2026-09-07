@@ -52,13 +52,18 @@ export function resetProgress() {
 
 /**
  * Record a completed activity, awarding XP and its badge (once).
+ * Replaying an activity that's already in completedActivityIds must be a
+ * safe no-op for XP/uniqueness purposes — only the very first completion
+ * of a given activityId should add XP or count toward set-completion.
  * @param {string} activityId
  * @param {string} badgeId one of BADGES keys
- * @param {number} [totalActivitiesInSet] used to also award "Fixy Helper"
- *   when every activity in the current set has now been completed.
- * @param {number} [completedInSetCount]
+ * @param {string[]} [setActivityIds] every activity id in the activity's
+ *   set, used to award "Fixy Helper" once every one of them has been
+ *   completed at least once (computed from the authoritative
+ *   completedActivityIds list — never from a caller-supplied count — so a
+ *   replay can never inflate or miscalculate this threshold).
  */
-export function awardActivity(activityId, badgeId, totalActivitiesInSet, completedInSetCount) {
+export function awardActivity(activityId, badgeId, setActivityIds) {
   const progress = safeGet();
   const alreadyDone = progress.completedActivityIds.includes(activityId);
 
@@ -69,8 +74,11 @@ export function awardActivity(activityId, badgeId, totalActivitiesInSet, complet
   if (badgeId && !progress.badges.includes(badgeId)) {
     progress.badges.push(badgeId);
   }
-  if (totalActivitiesInSet && completedInSetCount >= totalActivitiesInSet && !progress.badges.includes('fixy-helper')) {
-    progress.badges.push('fixy-helper');
+  if (Array.isArray(setActivityIds) && setActivityIds.length) {
+    const completedInSet = setActivityIds.filter(id => progress.completedActivityIds.includes(id)).length;
+    if (completedInSet >= setActivityIds.length && !progress.badges.includes('fixy-helper')) {
+      progress.badges.push('fixy-helper');
+    }
   }
   progress.level = Math.max(1, Math.floor(progress.xp / XP_PER_LEVEL) + 1);
 

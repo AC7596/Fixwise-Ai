@@ -78,10 +78,28 @@ export const RISK_SIGNALS = [
   {
     id: 'carbon-monoxide',
     level: RISK_LEVEL.STOP,
-    keywords: ['carbon monoxide', 'co alarm', 'co detector', 'co2 alarm'],
+    // NOTE: deliberately does NOT include any "co2"/"carbon dioxide" phrasing.
+    // Carbon monoxide (CO) and carbon dioxide (CO2) are different hazards
+    // with very different urgency — see the separate 'carbon-dioxide' signal
+    // below. Keep these two lists disjoint so "CO2 alarm" never triggers
+    // this STOP-level carbon-monoxide response.
+    keywords: ['carbon monoxide', 'co alarm', 'co detector', 'co alarm going off', 'co detector going off'],
     title: 'Possible carbon monoxide danger',
     message: 'Carbon monoxide is invisible and odorless — an alarm going off is a genuine emergency, not a false-positive to troubleshoot.',
     action: 'Get everyone outside into fresh air immediately and call 911 or your fire department. Do not re-enter until cleared.'
+  },
+  {
+    id: 'carbon-dioxide',
+    level: RISK_LEVEL.CAUTION,
+    // Carbon dioxide (CO2) build-up is a real but much lower-urgency air-
+    // quality concern than carbon monoxide (CO) — it should never be
+    // classified as the CO emergency above just because "CO" is a substring
+    // of "CO2". Handled separately at CAUTION unless other STOP-level
+    // symptoms (e.g. actual CO alarm language) are also present.
+    keywords: ['carbon dioxide', 'co2 alarm', 'co2 detector', 'co2 levels', 'co2 build up', 'co2 buildup'],
+    title: 'Carbon dioxide (CO2) alert',
+    message: 'Carbon dioxide build-up can cause headaches, drowsiness, or poor air quality, but it is a different hazard than carbon monoxide (CO) and is not immediately life-threatening at typical household levels.',
+    action: 'Ventilate the area (open windows, run exhaust fans) and check that the CO2 sensor/monitor is functioning correctly. If a separate CO (carbon monoxide) alarm is also sounding, treat that as an emergency instead.'
   },
   {
     id: 'sewage',
@@ -144,7 +162,7 @@ export const RISK_SIGNALS = [
 /**
  * Escapes regex special characters in a plain keyword/phrase.
  */
-function escapeRegExp(str) {
+export function escapeRegExp(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
@@ -152,8 +170,11 @@ function escapeRegExp(str) {
  * Whole-word/phrase match: guards against substrings matching inside an
  * unrelated longer word (e.g. the "fire" signal should not fire on
  * "fireplace" or "firearm"). Uses \b word boundaries around the phrase.
+ * Exported so other modules (e.g. js/api/ai-client.js's malfunction-signal
+ * detection) can reuse the same safe matching approach instead of plain
+ * substring checks.
  */
-function matchesKeyword(normalizedText, keyword) {
+export function matchesKeyword(normalizedText, keyword) {
   const pattern = new RegExp(`\\b${escapeRegExp(keyword)}\\b`, 'i');
   return pattern.test(normalizedText);
 }
