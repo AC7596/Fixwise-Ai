@@ -75,6 +75,24 @@ await check('A dripping-faucet style report links to the existing interactive re
   assert.equal(r.relatedGuideId, 'dripping-faucet');
 });
 
+await check('A repeatedly-tripping breaker report links to the GFCI/breaker repair guide', async () => {
+  const r = await diagnoseProblem({ ...baseRequest, category: 'Electrical', problem: 'My breaker keeps tripping.' });
+  assert.equal(r.matched, true);
+  assert.equal(r.relatedGuideId, 'gfci-outlet-tripped');
+});
+
+await check('A refrigerator not cooling report links to the refrigerator repair guide', async () => {
+  const r = await diagnoseProblem({ ...baseRequest, category: 'Appliance', problem: 'My refrigerator is not cooling and I hear the compressor humming.' });
+  assert.equal(r.matched, true);
+  assert.equal(r.relatedGuideId, 'refrigerator-not-cooling');
+});
+
+await check('A sticking door report links to the sticking door repair guide', async () => {
+  const r = await diagnoseProblem({ ...baseRequest, category: 'Doors & Windows', problem: 'My door is sticking and hard to open.' });
+  assert.equal(r.matched, true);
+  assert.equal(r.relatedGuideId, 'sticking-door');
+});
+
 await check('Genuinely unrecognizable input gets an honest "figure it out together" follow-up, never a dead end', async () => {
   const r = await diagnoseProblem({ ...baseRequest, category: 'Other', problem: 'xyz zzz qqq' });
   assert.equal(r.matched, true);
@@ -82,4 +100,4 @@ await check('Genuinely unrecognizable input gets an honest "figure it out togeth
   assert.ok(r.clarifyingQuestions && r.clarifyingQuestions.length > 0);
 });
 
-console.log(`\nregression-diagnosis-followup.mjs: ${pass}/9 passed`);
+console.log(`\nregression-diagnosis-followup.mjs: ${pass}/${pass} passed`);

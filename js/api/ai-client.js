@@ -272,13 +272,23 @@ function localDemoDiagnosis({ category, problem, seen, heard, smell, otherSympto
   // end, and never an invented diagnosis. Used both when the category
   // itself isn't in the local knowledge base and when it is but nothing
   // inside it matched.
+  //
+  // `matched` intentionally stays `true` here (it means "FixWise has a
+  // useful response to show", which the UI in js/modules/diagnosis.js
+  // relies on to avoid its own flat "No specific match yet" dead end —
+  // see the `!diagnosis.matched` check there). `recognized: false` is the
+  // separate, honest signal for API consumers that need to know nothing
+  // specific was actually identified (as opposed to `needsFollowUp` cases
+  // where a real intent/issue/signal was found but needs more detail).
   const buildUnknownResult = () => {
     const signalFollowUps = risk.signals.flatMap(signal => signal.followUp || []);
     const clarifyingQuestions = signalFollowUps.length ? signalFollowUps : GENERIC_UNKNOWN_QUESTIONS;
+    const recognized = Boolean(signalFollowUps.length || hasDanger || intent);
     return {
       matched: true,
       needsFollowUp: true,
-      unknown: !signalFollowUps.length && !hasDanger,
+      recognized,
+      unknown: !recognized,
       intent,
       intentMeta,
       confidence: { level: 'low', label: 'Not enough detail yet to give a specific recommendation' },
