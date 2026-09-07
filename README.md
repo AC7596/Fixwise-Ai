@@ -81,16 +81,28 @@ js/api/ai-client.js       ── the ONLY place that knows whether a backend
                                                  keyword-matching stand-in
                                                  against js/data/diagnosis-data.js
         ▼
-Structured response (matched, confidence, hasDanger/dangerConfig, issue,
-category) is rendered by js/modules/diagnosis.js — this rendering code
-never changes based on whether the response came from the demo engine or
-a real backend, because both return the same shape.
+Structured response (matched, needsFollowUp, confidence, hasDanger/
+dangerConfig, issue, relatedGuideId, category) is rendered by
+js/modules/diagnosis.js — this rendering code never changes based on
+whether the response came from the demo engine or a real backend, because
+both return the same shape.
 ```
 
 Follow-up answers are appended to `conversationHistory` in the browser
 session and re-sent with the next diagnosis request, so a real backend can
 use the full conversation to progressively narrow its answer instead of
 treating each message as unrelated.
+
+`localDemoDiagnosis()` is intentionally designed to never dead-end: when it
+recognizes an intent (troubleshoot/repair/replace/install/...) or a safety
+signal but doesn't have a specific knowledge-base match, it asks a
+clarifying question (`needsFollowUp: true`) instead of a flat "no match"
+response — and if it genuinely doesn't recognize anything at all, it says
+so honestly and asks a general question, in keeping with Fixy's "I don't
+know yet — let's figure it out" philosophy. When a matched issue has a
+corresponding entry in `js/data/guides-data.js`, `relatedGuideId` is set so
+the UI can offer "Guide me through it" and hand off into the existing
+interactive repair mode (`js/modules/repair-mode.js`).
 
 ## Demo Mode & backend configuration
 

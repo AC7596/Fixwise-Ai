@@ -49,7 +49,8 @@ export const diagnosisDatabase = {
         tips: ['Take a photo of the fitting before removing it so reassembly is easier.'],
         stopWhen: 'Water is spraying forcefully or you cannot identify the shutoff valve.',
         safety: 'Turn off water supply first',
-        pro: 'If water is spraying, shut off the main water valve immediately and call a plumber.'
+        pro: 'If water is spraying, shut off the main water valve immediately and call a plumber.',
+        relatedGuideId: 'dripping-faucet'
       },
       'slow drain|draining slowly|drain slow': {
         causes: ['Partial drain blockage', 'Hair and soap buildup', 'Vent pipe issue'],
@@ -192,7 +193,8 @@ export const diagnosisDatabase = {
         tips: [],
         stopWhen: 'The breaker trips repeatedly even with everything unplugged.',
         safety: 'Do not repeatedly reset a tripping breaker',
-        pro: 'Repeated breaker trips indicate an electrical fault — call an electrician.'
+        pro: 'Repeated breaker trips indicate an electrical fault — call an electrician.',
+        relatedGuideId: 'gfci-outlet-tripped'
       },
       'shock|tingling': {
         causes: ['Damaged appliance', 'Wet condition', 'Faulty wiring'],
@@ -259,7 +261,8 @@ export const diagnosisDatabase = {
         tips: ['Clean coils every 6 months to prevent this from recurring.'],
         stopWhen: 'You smell a chemical or ammonia-like odor.',
         safety: 'Unplug before cleaning',
-        pro: 'Compressor or refrigerant issues need a technician.'
+        pro: 'Compressor or refrigerant issues need a technician.',
+        relatedGuideId: 'refrigerator-not-cooling'
       },
       'washer|washing machine': {
         causes: ['Clogged drain', 'Water inlet valve', 'Drive belt wear'],
@@ -384,7 +387,8 @@ export const diagnosisDatabase = {
         tips: [],
         stopWhen: 'The furnace repeatedly shuts off or you smell gas.',
         safety: 'Let furnace rest if it shuts off repeatedly',
-        pro: 'If pilot won\'t light or furnace keeps shutting off, call HVAC immediately.'
+        pro: 'If pilot won\'t light or furnace keeps shutting off, call HVAC immediately.',
+        relatedGuideId: 'room-not-heating'
       },
       'not cooling|no ac|hot room': {
         causes: ['Thermostat setting', 'Clogged air filter', 'Outdoor unit issue', 'Low refrigerant'],
@@ -472,7 +476,8 @@ export const diagnosisDatabase = {
         tips: [],
         stopWhen: 'The frame itself appears warped or separated from the wall.',
         safety: 'Low risk',
-        pro: 'Major frame damage may need carpenter work.'
+        pro: 'Major frame damage may need carpenter work.',
+        relatedGuideId: 'sticking-door'
       },
       'hinge|hinge loose': {
         causes: ['Loose screws', 'Stripped screw hole', 'Hinge wear'],
@@ -556,7 +561,8 @@ export const diagnosisDatabase = {
         tips: ['Add a door stop to prevent repeat damage from a doorknob.'],
         stopWhen: 'You suspect wiring or plumbing may be behind the damaged section.',
         safety: 'Low risk',
-        pro: 'Small holes: spackling. Large damage: drywall patch or professional.'
+        pro: 'Small holes: spackling. Large damage: drywall patch or professional.',
+        relatedGuideId: 'drywall-hole-repair'
       },
       'paint|stain|discoloration': {
         causes: ['Water damage', 'Mold', 'Dirt or marks'],
@@ -601,7 +607,8 @@ export const diagnosisDatabase = {
         tips: [],
         stopWhen: 'The floor feels soft or spongy — this can indicate structural rot.',
         safety: 'Do not ignore soft spots — they may indicate structural issues',
-        pro: 'Subfloor or joist problems need a structural specialist.'
+        pro: 'Subfloor or joist problems need a structural specialist.',
+        relatedGuideId: 'squeaky-floorboard'
       },
       'mold|mildew|moisture': {
         causes: ['Poor ventilation', 'Water leak', 'High humidity'],

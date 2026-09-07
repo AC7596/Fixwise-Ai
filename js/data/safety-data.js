@@ -103,7 +103,17 @@ export const RISK_SIGNALS = [
     keywords: ['carbon dioxide', 'co2 alarm', 'co2 detector', 'co2 levels', 'co2 build up', 'co2 buildup'],
     title: 'Carbon dioxide (CO2) alert',
     message: 'Carbon dioxide build-up can cause headaches, drowsiness, or poor air quality, but it is a different hazard than carbon monoxide (CO) and is not immediately life-threatening at typical household levels.',
-    action: 'Ventilate the area (open windows, run exhaust fans) and check that the CO2 sensor/monitor is functioning correctly. If a separate CO (carbon monoxide) alarm is also sounding, treat that as an emergency instead.'
+    action: 'Ventilate the area (open windows, run exhaust fans) and check that the CO2 sensor/monitor is functioning correctly. If a separate CO (carbon monoxide) alarm is also sounding, treat that as an emergency instead.',
+    // Ambiguity-clarifying follow-up questions surfaced by ai-client.js when
+    // this is the only signal that matched (no knowledge-base issue and no
+    // classified intent) — this is what keeps "my CO2 alarm is going off"
+    // from dead-ending at "No specific match yet" while still refusing to
+    // treat it as the CO emergency.
+    followUp: [
+      'Is this a home air-quality/CO2 monitor (sometimes built into an indoor air-quality station or grow-room controller), or could it actually be a carbon-monoxide (CO) alarm? They look similar but mean very different things.',
+      'Does the device or its label say "CO2" / "carbon dioxide", or does it say "CO" / "carbon monoxide"?',
+      'Is a separate smoke or CO alarm also going off right now?'
+    ]
   },
   {
     id: 'sewage',

@@ -22,6 +22,8 @@
 .alt-causes{background:#fbf7ef;border-left-color:#c98a1f}
 .alt-causes h4{color:#8a5a10}
 .stop-note{background:#fff5f5;border-left:3px solid #d63031;padding:12px;border-radius:6px;font-size:13px;color:#c92a2a;margin:12px 0}
+.related-guide-note{background:#eef6f2;border:1px solid #dfe9e4;border-radius:8px;padding:12px 14px;margin:12px 0;text-align:center}
+.related-guide-note p{margin:0 0 8px;font-size:13px;color:#365247}
 .photo-note{font-size:13px;color:#6e827a;background:#f3f8f5;border-radius:8px;padding:10px 12px;margin-top:12px}
 .result-card.is-loading{opacity:.7}
 .result-badge{display:inline-block;border-radius:999px;padding:4px 10px;font-size:11px;font-weight:800;background:#e4f5ec;color:#1f6a4d}

@@ -5,6 +5,8 @@ import { diagnoseProblem, analyzePhotos, isBackendConnected } from '../api/ai-cl
 import { getSelectedPhotos, clearPhotos } from './photo-upload.js';
 import { getLevelBySlug } from '../data/levels.js';
 import { escapeHtml } from '../utils/html.js';
+import { repairGuides } from '../data/guides-data.js';
+import { openRepairMode } from './repair-mode.js';
 
 const els = {};
 
@@ -69,6 +71,7 @@ function cacheEls() {
     'stopSection', 'stopText',
     'nextCheck', 'diyLevel', 'safetyLevel', 'estimatedTime',
     'professionalNote', 'professionalText',
+    'relatedGuideSection', 'guideMeThroughIt',
     'photoNote', 'analyzeBtn', 'formError'
   ];
   ids.forEach(id => { els[id] = document.getElementById(id); });
@@ -87,7 +90,7 @@ function setListOrHide(sectionEl, listEl, items) {
 function resetResultSections() {
   ['dangerWarning', 'mostLikelyCauses', 'otherCausesSection', 'clarifyingSection',
     'followUpSection', 'stepsSection', 'toolsSection', 'partsSection', 'tipsSection', 'stopSection',
-    'professionalNote', 'photoNote', 'intentText'].forEach(key => {
+    'professionalNote', 'relatedGuideSection', 'photoNote', 'intentText'].forEach(key => {
     if (els[key]) els[key].style.display = 'none';
   });
   if (els.dangerWarning) els.dangerWarning.className = 'danger-warning';
@@ -265,6 +268,17 @@ function renderResults(diagnosis, photoResult) {
     els.professionalText.textContent = issue.pro;
   }
 
+  // ---- Connect diagnosis to an existing interactive repair guide, when
+  // this issue has one, so the homeowner can go straight from "here's what
+  // it might be" to "walk me through fixing it" without leaving the flow.
+  if (diagnosis.relatedGuideId && els.relatedGuideSection && els.guideMeThroughIt) {
+    const guide = repairGuides.find(g => g.id === diagnosis.relatedGuideId);
+    if (guide) {
+      els.relatedGuideSection.style.display = 'block';
+      els.guideMeThroughIt.dataset.guideId = guide.id;
+    }
+  }
+
   if (photoResult && photoResult.note) {
     els.photoNote.style.display = 'block';
     els.photoNote.textContent = photoResult.note;
@@ -377,5 +391,11 @@ export function initDiagnosisForm() {
     clearSession();
     if (els.formError) els.formError.textContent = '';
     showEmptyState('Enter a repair problem and press "Analyze problem." This demo shows how the future AI diagnosis flow can respond.');
+  });
+
+  els.guideMeThroughIt?.addEventListener('click', () => {
+    const guideId = els.guideMeThroughIt.dataset.guideId;
+    const guide = repairGuides.find(g => g.id === guideId);
+    if (guide) openRepairMode(guide);
   });
 }
