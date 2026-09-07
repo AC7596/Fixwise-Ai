@@ -175,6 +175,17 @@ function hasMalfunctionSignal(text) {
   return MALFUNCTION_SIGNAL_WORDS.some(word => matchesKeyword(text, word));
 }
 
+// Fixy's philosophy in practice: when nothing is recognized at all (no risk
+// signal, no intent, no knowledge-base match), FixWise should say so
+// honestly and ask a useful, general question rather than invent an answer
+// or simply dead-end with "no specific match". See README/BACKEND.md for
+// the broader "ask, don't guess" principle applied throughout this file.
+const GENERIC_UNKNOWN_QUESTIONS = [
+  'What part of your home or which appliance/system is this about (e.g. a specific outlet, faucet, furnace, dryer, door)?',
+  'Are you trying to fix something that stopped working, replace or install something new, or just understand how it works?',
+  'What exactly are you seeing, hearing, or smelling that prompted this?'
+];
+
 function localDemoDiagnosis({ category, problem, seen, heard, smell, otherSymptoms, conversationHistory }) {
   const categoryKey = (category || '').toLowerCase();
   const categoryData = diagnosisDatabase[categoryKey];
@@ -208,12 +219,10 @@ function localDemoDiagnosis({ category, problem, seen, heard, smell, otherSympto
   const intent = intentResult ? intentResult.intent : null;
   const intentMeta = intentResult ? intentResult.meta : null;
 
-  if (!categoryData) {
-    return { matched: false, category, intent, intentMeta, hasDanger, dangerConfig, riskLevel: risk.level };
-  }
-
-  // A true emergency-level risk always takes priority: stop and surface the
-  // safety warning rather than any repair/replace guidance.
+  // A true emergency-level risk always takes priority over everything else,
+  // including an unrecognized category — stop and surface the safety
+  // warning rather than any repair/replace guidance or a "no match" dead
+  // end.
   if (risk.level === RISK_LEVEL.STOP) {
     return {
       matched: true,
@@ -256,6 +265,44 @@ function localDemoDiagnosis({ category, problem, seen, heard, smell, otherSympto
     category
   });
 
+  // Shared shape for "nothing was recognized at all" — reuses any matched
+  // risk signal's own clarifying questions (e.g. the CO2-vs-CO ambiguity
+  // check) when present, or falls back to a genuinely honest "I don't know
+  // yet — let's figure it out" set of general questions. Never a flat dead
+  // end, and never an invented diagnosis. Used both when the category
+  // itself isn't in the local knowledge base and when it is but nothing
+  // inside it matched.
+  //
+  // `matched` intentionally stays `true` here (it means "FixWise has a
+  // useful response to show", which the UI in js/modules/diagnosis.js
+  // relies on to avoid its own flat "No specific match yet" dead end —
+  // see the `!diagnosis.matched` check there). `recognized: false` is the
+  // separate, honest signal for API consumers that need to know nothing
+  // specific was actually identified (as opposed to `needsFollowUp` cases
+  // where a real intent/issue/signal was found but needs more detail).
+  const buildUnknownResult = () => {
+    const signalFollowUps = risk.signals.flatMap(signal => signal.followUp || []);
+    const clarifyingQuestions = signalFollowUps.length ? signalFollowUps : GENERIC_UNKNOWN_QUESTIONS;
+    const recognized = Boolean(signalFollowUps.length || hasDanger || intent);
+    return {
+      matched: true,
+      needsFollowUp: true,
+      recognized,
+      intent,
+      intentMeta,
+      confidence: { level: 'low', label: 'Not enough detail yet to give a specific recommendation' },
+      hasDanger,
+      dangerConfig,
+      riskLevel: risk.level,
+      clarifyingQuestions,
+      category
+    };
+  };
+
+  if (!categoryData) {
+    return buildUnknownResult();
+  }
+
   if (isIntentionalAction && !mentionsMalfunction) {
     return buildFollowUpResult();
   }
@@ -277,18 +324,26 @@ function localDemoDiagnosis({ category, problem, seen, heard, smell, otherSympto
     }
   }
 
-  if (!matchedIssue && intent && !mentionsMalfunction) {
-    // Recognized an intent (repair/troubleshoot-shaped) but nothing in the
-    // knowledge base matched a specific known issue — ask rather than guess.
-    return buildFollowUpResult();
+  if (!matchedIssue) {
+    if (intent && !mentionsMalfunction) {
+      // Recognized an intent (repair/troubleshoot-shaped) but nothing in the
+      // knowledge base matched a specific known issue — ask rather than guess.
+      return buildFollowUpResult();
+    }
+
+    // Nothing in the knowledge base matched AND no actionable intent was
+    // classified (e.g. "My CO2 alarm is going off" — no "not working"/
+    // "replace"/etc. wording for classifyIntent to key off of). Previously
+    // this fell through to a flat "No specific match yet" dead end even
+    // when a real (if lower-severity) risk signal like CO2 had already been
+    // identified above.
+    return buildUnknownResult();
   }
 
-  const confidence = matchedIssue
-    ? estimateConfidence(fields.length, matchedKeywordHits, Boolean(conversationHistory && conversationHistory.length))
-    : null;
+  const confidence = estimateConfidence(fields.length, matchedKeywordHits, Boolean(conversationHistory && conversationHistory.length));
 
   return {
-    matched: Boolean(matchedIssue),
+    matched: true,
     needsFollowUp: false,
     intent: intent || INTENT.TROUBLESHOOT,
     intentMeta: intentMeta || INTENT_META[INTENT.TROUBLESHOOT],
@@ -297,6 +352,7 @@ function localDemoDiagnosis({ category, problem, seen, heard, smell, otherSympto
     dangerConfig,
     riskLevel: risk.level,
     issue: matchedIssue,
+    relatedGuideId: matchedIssue.relatedGuideId || null,
     category
   };
 }
