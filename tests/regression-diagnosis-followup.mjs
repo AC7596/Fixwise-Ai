@@ -93,6 +93,24 @@ await check('A sticking door report links to the sticking door repair guide', as
   assert.equal(r.relatedGuideId, 'sticking-door');
 });
 
+await check('A furnace not heating report links to the room-not-heating repair guide', async () => {
+  const r = await diagnoseProblem({ ...baseRequest, category: 'Heating & Cooling', problem: 'The furnace is not heating the room at all.' });
+  assert.equal(r.matched, true);
+  assert.equal(r.relatedGuideId, 'room-not-heating');
+});
+
+await check('A drywall hole report links to the drywall-hole-repair guide', async () => {
+  const r = await diagnoseProblem({ ...baseRequest, category: 'Other', problem: 'There is a hole in the drywall from a doorknob.' });
+  assert.equal(r.matched, true);
+  assert.equal(r.relatedGuideId, 'drywall-hole-repair');
+});
+
+await check('A squeaky floor report links to the squeaky-floorboard repair guide', async () => {
+  const r = await diagnoseProblem({ ...baseRequest, category: 'Other', problem: 'The hallway floor is squeaky when I walk on it.' });
+  assert.equal(r.matched, true);
+  assert.equal(r.relatedGuideId, 'squeaky-floorboard');
+});
+
 await check('Genuinely unrecognizable input gets an honest "figure it out together" follow-up, never a dead end', async () => {
   const r = await diagnoseProblem({ ...baseRequest, category: 'Other', problem: 'xyz zzz qqq' });
   assert.equal(r.matched, true);
