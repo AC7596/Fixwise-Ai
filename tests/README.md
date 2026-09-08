@@ -12,6 +12,7 @@ From the repository root:
 ```bash
 node tests/regression-malfunction-signal.mjs
 node tests/regression-co-vs-co2.mjs
+node tests/regression-co-vs-co2-followup.mjs
 node tests/regression-kids-progress.mjs
 node tests/regression-diagnosis-followup.mjs
 ```
@@ -37,6 +38,15 @@ without any additional tooling.
   "CO" is a substring of "CO2" — while genuine CO alarm language still
   reliably triggers it, including when CO2 is mentioned in the same
   sentence.
+- **regression-co-vs-co2-followup.mjs** — the full follow-up/refine
+  diagnosis conversation flow (`diagnoseProblem()` in `js/api/ai-client.js`
+  across an initial message + a follow-up answer): once a follow-up answer
+  confirms carbon monoxide, the carbon-dioxide signal is dropped entirely
+  (via `excludes` in `js/data/safety-data.js`) so a confirmed CO emergency
+  response never contains contradictory CO2 "different hazard, not
+  immediately life-threatening" language, and vice versa for a confirmed
+  CO2 answer. Also covers immediate (no-follow-up-needed) CO recognition and
+  the still-ambiguous case correctly continuing to ask instead of guessing.
 - **regression-kids-progress.mjs** — `awardActivity()` in
   `js/modules/kids-progress.js` only awards XP and counts an activity
   toward set-completion/badges on its *first* completion; replaying an
