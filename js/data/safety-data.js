@@ -100,6 +100,17 @@ export const RISK_SIGNALS = [
     // even if the CO keyword list changes in the future. Other STOP-level
     // symptoms (e.g. actual CO alarm language) mentioned in the same text
     // still independently trigger the carbon-monoxide signal above.
+    //
+    // `excludes: ['carbon-monoxide']` handles the follow-up-conversation
+    // case: the initial ambiguous message ("my CO2 alarm is going off")
+    // matches this CO2 signal, but once the user's follow-up answer
+    // explicitly confirms it's actually a carbon-monoxide alarm ("it says
+    // CO carbon monoxide"), the combined session text matches BOTH signals.
+    // Carbon monoxide is the more specific, more urgent, and more recently
+    // confirmed reading, so it wins outright and this CAUTION-level CO2
+    // message/action must not also appear in the same response (see
+    // assessRisk() below for the actual suppression logic).
+    excludes: ['carbon-monoxide'],
     keywords: ['carbon dioxide', 'co2 alarm', 'co2 detector', 'co2 levels', 'co2 build up', 'co2 buildup'],
     title: 'Carbon dioxide (CO2) alert',
     message: 'Carbon dioxide build-up can cause headaches, drowsiness, or poor air quality, but it is a different hazard than carbon monoxide (CO) and is not immediately life-threatening at typical household levels.',
@@ -203,9 +214,20 @@ export function matchesKeyword(normalizedText, keyword) {
  */
 export function assessRisk(text) {
   const normalized = (text || '').toLowerCase();
-  const matched = RISK_SIGNALS.filter(signal => signal.keywords.some(kw => matchesKeyword(normalized, kw)));
+  let matched = RISK_SIGNALS.filter(signal => signal.keywords.some(kw => matchesKeyword(normalized, kw)));
 
   if (!matched.length) return { level: RISK_LEVEL.NONE, signals: [] };
+
+  // Mutual exclusion: some signals (e.g. carbon-dioxide vs. carbon-monoxide)
+  // describe genuinely different hazards that must never be presented
+  // together in the same response, even if both keyword lists happen to
+  // match the combined session text (e.g. an initial "CO2 alarm" message
+  // followed by a clarifying answer that confirms "carbon monoxide"). When
+  // a signal's `excludes` list names another signal that also matched,
+  // drop the excluded (lower-priority) one so the response only reflects
+  // the confirmed, more urgent hazard.
+  const matchedIds = new Set(matched.map(signal => signal.id));
+  matched = matched.filter(signal => !(signal.excludes || []).some(excludedId => matchedIds.has(excludedId)));
 
   const topLevel = matched.reduce((highest, signal) => (
     RISK_RANK[signal.level] > RISK_RANK[highest] ? signal.level : highest
