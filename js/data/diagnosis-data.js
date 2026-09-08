@@ -283,11 +283,101 @@ export const diagnosisDatabase = {
         safety: 'Unplug before working on it',
         pro: 'Internal drum or motor issues require a technician.'
       },
+      // Dryer: the same base entry backs two genuinely different problems —
+      // "runs but no heat" and "won't start at all". `subIssues` let the
+      // session-fact layer (js/data/fact-data.js) pick the right one from
+      // what the homeowner has ALREADY said instead of asking again.
+      // A sub-issue with `when` only matches once every referenced fact is
+      // known; a sub-issue with `notWhen` is excluded once those facts are
+      // known. While nothing is known either way, `defaultSubIssue` is used
+      // and its clarifying questions are what establish the missing facts.
       'dryer': {
-        causes: ['Clogged vent', 'Thermal fuse blown', 'Lint trap full'],
-        otherCauses: ['Worn drive belt', 'Faulty door switch'],
-        clarifyingQuestions: ['Does it run but not produce heat, or not run at all?', 'When was the vent last cleaned?'],
-        nextCheck: 'Clean lint trap; check exhaust vent for blockage',
+        subIssues: {
+          'no-heat': {
+            when: { all: { runs: true, heats: false } },
+            notWhen: { any: { runs: false, heats: true } },
+            causes: [
+              'Clogged or restricted exhaust vent',
+              'Thermal fuse blown',
+              'High-limit thermostat or thermal cutoff tripped',
+              { text: 'Heating element burned out', when: { all: { powerType: 'electric' } } },
+              { text: 'Only one leg of the 240V supply reaching the dryer (partial tripped breaker)', when: { all: { powerType: 'electric' } } },
+              { text: 'Gas igniter or gas valve solenoid failure', when: { all: { powerType: 'gas' } } },
+              'Lint trap full / airflow restriction'
+            ],
+            otherCauses: [
+              'Faulty cycling thermostat',
+              { text: 'Worn or broken drive belt', notWhen: { all: { drumTurns: true } } },
+              { text: 'Faulty door switch', notWhen: { all: { runs: true } } },
+              { text: 'Failed timer or electronic control board', notWhen: { all: { drumTurns: true, powerType: 'electric' } } }
+            ],
+            clarifyingQuestions: [
+              { text: 'Is the dryer gas or electric?', when: { not: { powerType: ['gas', 'electric'] } } },
+              { text: 'Does the drum turn normally when it runs?', when: { not: { drumTurns: [true, false] } } },
+              'Is there absolutely no heat, or does it get slightly warm?',
+              { text: 'Has drying time gradually increased over the past weeks or months?', when: { negated: 'slowProgress' } },
+              'Is the airflow from the outside vent weak while it runs?',
+              'When was the vent last cleaned?'
+            ],
+            nextCheck: 'Clean lint trap; check exhaust vent for blockage and weak outside airflow',
+            steps: [
+              'Unplug the dryer (and shut off the gas supply valve for a gas dryer).',
+              'Clean the lint trap thoroughly.',
+              'Disconnect and check the exhaust vent hose for lint buildup.',
+              'Check the airflow at the exterior vent hood while the dryer runs.',
+              'Reconnect and test a short cycle on high heat.'
+            ],
+            tools: ['Vent brush', 'Screwdriver', 'Multimeter (optional, for element/fuse testing)'],
+            parts: ['Thermal fuse (if blown)', 'Heating element (electric, if failed)'],
+            time: '30–45 minutes',
+            difficulty: LEVELS.BEGINNER.slug,
+            tips: ['A clogged vent is a common fire risk — clean it at least once a year.'],
+            stopWhen: 'You notice a burning smell.',
+            safety: 'Unplug first',
+            pro: 'Heating element, gas valve, or control-board failure needs a professional.'
+          },
+          'no-start': {
+            when: { all: { runs: false } },
+            causes: [
+              'No power — tripped breaker, blown fuse, or loose plug',
+              'Faulty door switch',
+              'Failed start switch',
+              'Thermal fuse blown (cuts power to the whole dryer on many models)'
+            ],
+            otherCauses: [
+              'Worn drive belt (on models with a broken-belt kill switch)',
+              'Failed drive motor',
+              'Failed timer or electronic control board'
+            ],
+            clarifyingQuestions: [
+              'Do any lights or sounds come on when you try to start it?',
+              'Does the door click firmly shut?',
+              'Have you checked the breaker or tried another outlet?'
+            ],
+            nextCheck: 'Confirm the outlet has power; check the breaker and door switch',
+            steps: [
+              'Confirm the dryer is plugged in fully (240V plugs can work loose).',
+              'Check the breaker panel for a tripped breaker and reset it once.',
+              'Open and firmly re-close the door, listening for the door-switch click.',
+              'If it is completely dead, test the outlet with another device or a multimeter.'
+            ],
+            tools: ['Multimeter (optional)', 'Screwdriver'],
+            parts: ['Door switch (if failed)', 'Thermal fuse (if blown)'],
+            time: '20–45 minutes',
+            difficulty: LEVELS.BEGINNER.slug,
+            tips: ['A dryer that stopped mid-cycle and now won\'t start often has a blown thermal fuse from a clogged vent.'],
+            stopWhen: 'You see scorch marks, smell burning, or find damaged wiring.',
+            safety: 'Unplug first',
+            pro: 'Motor or control-board replacement needs a professional.'
+          }
+        },
+        // Used while the session facts don't yet say whether the dryer
+        // runs — the questions here are exactly what establish that.
+        defaultSubIssue: 'no-heat',
+        causes: ['Clogged or restricted exhaust vent', 'Thermal fuse blown', 'High-limit thermostat or thermal cutoff tripped'],
+        otherCauses: ['Faulty door switch (if it will not start)', 'Worn drive belt (if the drum does not turn)'],
+        clarifyingQuestions: ['Does it run but not produce heat, or not run at all?', 'Is the dryer gas or electric?', 'When was the vent last cleaned?'],
+        nextCheck: 'Note whether it runs at all; clean lint trap; check exhaust vent for blockage',
         steps: [
           'Unplug the dryer.',
           'Clean the lint trap thoroughly.',
@@ -342,9 +432,19 @@ export const diagnosisDatabase = {
         pro: 'Most microwave repairs require a technician.'
       },
       'oven|stove|range': {
-        causes: ['Burner element', 'Igniter failure', 'Thermostat issue'],
-        otherCauses: ['Faulty temperature sensor', 'Gas supply issue'],
-        clarifyingQuestions: ['Is this gas or electric?', 'Does it click but not ignite, or not respond at all?'],
+        causes: [
+          { text: 'Burner element failure', when: { all: { powerType: 'electric' } } },
+          { text: 'Igniter failure', when: { all: { powerType: 'gas' } } },
+          'Thermostat issue'
+        ],
+        otherCauses: [
+          'Faulty temperature sensor',
+          { text: 'Gas supply issue', when: { all: { powerType: 'gas' } } }
+        ],
+        clarifyingQuestions: [
+          { text: 'Is this gas or electric?', when: { not: { powerType: ['gas', 'electric'] } } },
+          'Does it click but not ignite, or not respond at all?'
+        ],
         nextCheck: 'Check if burners ignite; test temperature control',
         steps: [
           'Turn off the appliance and let it cool.',
