@@ -144,7 +144,7 @@ const GENERIC_FACT_RULES = [
   { key: 'cools', value: false, keywords: ['not cooling', "isn't cooling", 'is not cooling', "won't cool", 'will not cool', 'no cold air', 'blows warm', 'blowing warm', 'not getting cold', 'never gets cold', 'barely cool'] },
 
   // ---- gradual degradation ("slowly takes longer", "getting weaker") ----
-  { key: 'slowProgress', value: true, keywords: ['takes longer', 'taking longer', 'getting weaker', 'gradually worse', 'getting worse', 'slowly gotten worse', 'less and less', 'weaker airflow', 'takes forever', 'takes two cycles', 'multiple cycles to dry'] },
+  { key: 'slowProgress', value: true, keywords: ['takes longer', 'taking longer', 'gradually increased', 'gradually gotten worse', 'getting weaker', 'gradually worse', 'getting worse', 'slowly gotten worse', 'less and less', 'weaker airflow', 'takes forever', 'takes two cycles', 'multiple cycles to dry', 'has gradually'] },
 
   // ---- weak airflow / circulation ----
   { key: 'weakAirflow', value: true, keywords: ['weak airflow', 'little airflow', 'barely any air', 'poor airflow', 'no airflow', 'weak air flow', 'vent barely blows', 'outside vent is weak'] }
@@ -418,11 +418,16 @@ function someFact(facts, shape) {
 }
 
 /**
- * Evaluate one condition group ({ all, any, not, negated }) against the
- * known-fact table. `not` means "every listed key is known AND none match
- * the listed values". `negated` names a single key that must be known and
- * false (used by questions like "Does it get slightly warm?" that only
- * make sense once heat=false is established).
+ * Evaluate one condition group ({ all, any, not, negated, unknownOr })
+ * against the known-fact table.
+ *   all:       every listed key is KNOWN and matches.
+ *   any:       at least one listed key is KNOWN and matches.
+ *   not:       every listed key is KNOWN and none match (no guessing).
+ *   negated:   the single named key is known and false.
+ *   unknownOr: each listed key is either UNKNOWN or matches — used for
+ *              cause-level fallbacks that should show until the homeowner
+ *              rules them out (e.g. "Burner element failure (electric)"
+ *              stays until powerType is known to be gas).
  */
 export function conditionMatches(condition, facts) {
   if (!condition) return true;
@@ -433,6 +438,12 @@ export function conditionMatches(condition, facts) {
     const actual = facts.get(key).value;
     if (Array.isArray(expected)) return !expected.includes(actual);
     return actual !== expected;
+  })) return false;
+  if (condition.unknownOr && !Object.entries(condition.unknownOr).every(([key, expected]) => {
+    if (!facts.has(key)) return true; // not yet ruled out
+    const actual = facts.get(key).value;
+    if (Array.isArray(expected)) return expected.includes(actual);
+    return actual === expected;
   })) return false;
   if (condition.negated) {
     const key = condition.negated;

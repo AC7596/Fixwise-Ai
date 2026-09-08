@@ -433,8 +433,8 @@ export const diagnosisDatabase = {
       },
       'oven|stove|range': {
         causes: [
-          { text: 'Burner element failure', when: { all: { powerType: 'electric' } } },
-          { text: 'Igniter failure', when: { all: { powerType: 'gas' } } },
+          { text: 'Burner element failure (electric)', when: { unknownOr: { powerType: 'electric' } } },
+          { text: 'Igniter failure (gas)', when: { unknownOr: { powerType: 'gas' } } },
           'Thermostat issue'
         ],
         otherCauses: [

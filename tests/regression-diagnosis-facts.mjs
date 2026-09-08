@@ -170,6 +170,40 @@ await check('Follow-up "It\'s gas" swaps in gas ignition components', async () =
   assert.ok(!/heating element/.test(causes), 'electric heating element must not appear for a gas dryer');
 });
 
+await check('Saying gas first and then "actually electric" asks to clarify, never silently swaps', async () => {
+  const r = await diagnoseProblem({
+    ...baseRequest, category: 'Appliance',
+    problem: "My gas dryer runs but doesn't get hot.",
+    conversationHistory: followUp("Sorry, it's actually electric.")
+  });
+  assert.equal(r.needsFollowUp, true);
+  assert.equal(r.hasContradiction, true);
+  assert.ok(/gas or electric/i.test((r.clarifyingQuestions || []).join(' ')));
+});
+
+// ---- Cross-category: oven/stove power-type conditioning -----------------
+await check('Oven: unknown power type keeps both burner styles, then narrows', async () => {
+  const unknown = await diagnoseProblem({
+    ...baseRequest, category: 'Appliance',
+    problem: "My oven won't heat up.",
+    conversationHistory: []
+  });
+  const unknownCauses = (unknown.issue?.causes || []).join(' ').toLowerCase();
+  assert.ok(/element/.test(unknownCauses) && /igniter/.test(unknownCauses),
+    'unknown power type should keep both electric and gas burner causes');
+
+  const gas = await diagnoseProblem({
+    ...baseRequest, category: 'Appliance',
+    problem: "My oven won't heat up.",
+    conversationHistory: followUp("It's gas")
+  });
+  const gasCauses = (gas.issue?.causes || []).join(' ').toLowerCase();
+  assert.ok(/igniter/.test(gasCauses));
+  assert.ok(!/element failure/.test(gasCauses), 'gas oven must not list electric element failure');
+  const gasQs = (gas.issue?.clarifyingQuestions || []).join(' ').toLowerCase();
+  assert.ok(!/gas or electric/.test(gasQs), 'must not re-ask the answered fuel question');
+});
+
 // ---- Fact extraction unit checks ----------------------------------------
 await check('extractFacts: "runs but doesn\'t get hot" = runs + no heat', () => {
   const { facts } = extractFacts("my dryer runs but doesn't get hot");

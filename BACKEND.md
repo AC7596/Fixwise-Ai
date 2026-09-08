@@ -101,6 +101,19 @@ shape currently used by the demo logic in `js/api/ai-client.js`:
 signal for even a rough estimate) and must always be phrased as a
 likelihood ("possible cause", "likely cause") — never as a certainty.
 
+Additional optional fields the demo engine already produces (a real
+backend may do the same; the UI ignores them when absent):
+
+- `knownFacts`: an object of session facts extracted from the homeowner's
+  own words so far, e.g. `{ "runs": true, "heats": false,
+  "powerType": "electric" }` — the backend should reason from these rather
+  than re-asking already-answered questions.
+- `subject`: the specific item/system detected (e.g. `"dryer"`).
+- `hasContradiction`: `true` when the latest follow-up answer conflicts
+  with an earlier established fact; in that case the response should be a
+  `needsFollowUp: true` clarification question rather than a silent
+  re-diagnosis.
+
 ## Steps to connect the real backend
 
 1. Build and deploy the backend endpoint(s) described above.
