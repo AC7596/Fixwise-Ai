@@ -24,6 +24,9 @@
 import { diagnosisDatabase } from '../data/diagnosis-data.js';
 import { classifyIntent, INTENT, INTENT_META, INTENTIONAL_ACTION_INTENTS, getIntentFollowUpQuestions } from '../data/intent-data.js';
 import { assessRisk, RISK_LEVEL, RISK_BADGE_LABEL, matchesKeyword } from '../data/safety-data.js';
+import {
+  buildSessionFacts, applyFactsToCauses, filterAnsweredQuestions, conditionMatches
+} from '../data/fact-data.js';
 
 // ----------------------------------------------------------------------
 // CONFIG: how the backend URL is resolved (no secrets, GitHub-Pages-safe)
@@ -186,6 +189,115 @@ const GENERIC_UNKNOWN_QUESTIONS = [
   'What exactly are you seeing, hearing, or smelling that prompted this?'
 ];
 
+// ----------------------------------------------------------------------
+// Session-fact reasoning (js/data/fact-data.js): the demo engine's memory.
+// Facts are extracted from each message separately — the original form
+// fields AND every follow-up answer — so the diagnosis below can:
+//   - pick the knowledge-base sub-issue that fits what is already known
+//     (e.g. dryer no-heat vs dryer no-start),
+//   - never re-ask a question the homeowner has already answered,
+//   - drop causes that contradict established facts, and
+//   - ask for clarification when a later answer contradicts an earlier one
+//     instead of silently choosing one reading.
+// ----------------------------------------------------------------------
+
+// Human-readable phrasing for each fact key, used when a contradiction has
+// to be turned into an honest clarifying question.
+const FACT_LABELS = {
+  runs: {
+    earlier: 'it runs/turns on',
+    latest: 'it won\'t turn on or start',
+    question: 'Earlier you said it runs, but now it sounds like it won\'t turn on at all — which is it? Does it power on and run, or does it stay completely dead?'
+  },
+  heats: {
+    earlier: 'it heats',
+    latest: 'it doesn\'t heat',
+    question: 'Earlier you mentioned heat, but now it sounds like there\'s no heat — does it produce any warmth at all, or none?'
+  },
+  drumTurns: {
+    earlier: 'the dryer runs',
+    latest: 'the drum doesn\'t turn',
+    question: 'Just to clarify: do you hear the motor running but the drum stays still (which usually points to a broken belt), or does the drum turn normally while it runs?'
+  },
+  waterFlow: {
+    earlier: 'water flows',
+    latest: 'no water comes out',
+    question: 'Earlier you mentioned water flowing, but now it sounds like no water comes out — does any water flow at all?'
+  },
+  drains: {
+    earlier: 'it drains',
+    latest: 'it doesn\'t drain',
+    question: 'Earlier it sounded like drainage was fine, but now it sounds like it won\'t drain — does water drain away, even slowly?'
+  },
+  cools: {
+    earlier: 'it cools',
+    latest: 'it doesn\'t cool',
+    question: 'Earlier you mentioned it cools, but now it sounds like it isn\'t cooling — does it produce any cold air at all?'
+  },
+  leakTiming: {
+    earlier: 'the leak only happens while it runs',
+    latest: 'the leak is constant',
+    question: 'Just to clarify the leak: does it only leak while water is running / the appliance is on, or does it leak constantly, even when off?'
+  },
+  powerType: {
+    earlier: 'it is one fuel type (gas or electric)',
+    latest: 'the other fuel type',
+    question: 'Just to double-check: is it gas or electric? Your answers mentioned both.'
+  }
+};
+
+function contradictionQuestion(contradiction) {
+  const label = FACT_LABELS[contradiction.key];
+  if (label) return label.question;
+  return `Earlier you said one thing about the ${contradiction.key}, but your latest answer seems to conflict — can you clarify which is correct?`;
+}
+
+// Pick the sub-issue of a knowledge-base entry that fits the known facts.
+// `when` conditions must be fully satisfied (every referenced fact known);
+// `notWhen` conditions exclude a sub-issue outright. While nothing has
+// been established either way, `defaultSubIssue` is used.
+function pickSubIssue(issueData, facts) {
+  if (!issueData || !issueData.subIssues) return null;
+  for (const sub of Object.values(issueData.subIssues)) {
+    if (!sub.when) continue;
+    if (sub.notWhen && conditionMatches(sub.notWhen, facts)) continue;
+    if (conditionMatches(sub.when, facts)) return sub; // fully satisfied — a real match
+  }
+  const fallback = issueData.defaultSubIssue && issueData.subIssues[issueData.defaultSubIssue];
+  if (fallback && !(fallback.notWhen && conditionMatches(fallback.notWhen, facts))) return fallback;
+  return null;
+}
+
+/**
+ * Reason over a matched knowledge-base issue using the session facts:
+ * select the right sub-issue, drop causes that contradict known facts, and
+ * filter out clarifying questions that are already answered. Returns a
+ * NEW issue object — the shared knowledge-base entry is never mutated.
+ */
+function refineIssueWithFacts(issueData, facts) {
+  const sub = pickSubIssue(issueData, facts);
+  const source = sub ? { ...issueData, ...sub } : { ...issueData };
+  delete source.subIssues;
+  delete source.defaultSubIssue;
+
+  const main = applyFactsToCauses(source.causes, facts);
+  // Never show an empty cause list — if everything known-dependent was
+  // ruled out or is still unknown, fall back to the hidden/contradicted
+  // entries so the homeowner still has a starting point.
+  source.causes = main.kept.length
+    ? main.kept
+    : main.hidden.concat(main.contradicted);
+  const other = applyFactsToCauses(source.otherCauses, facts);
+  // Causes contradicted by established facts are demoted to the "other"
+  // list with an honest qualifier, rather than deleted or kept prominent.
+  const demoted = main.contradicted
+    .filter(text => !other.kept.includes(text))
+    .map(text => `${text} (less likely based on what you've described)`);
+  source.otherCauses = other.kept.concat(demoted);
+  source.clarifyingQuestions = filterAnsweredQuestions(source.clarifyingQuestions, facts);
+  return source;
+}
+
 function localDemoDiagnosis({ category, problem, seen, heard, smell, otherSymptoms, conversationHistory }) {
   const categoryKey = (category || '').toLowerCase();
   const categoryData = diagnosisDatabase[categoryKey];
@@ -201,6 +313,15 @@ function localDemoDiagnosis({ category, problem, seen, heard, smell, otherSympto
   if (!combinedText.trim()) {
     return { matched: false, category };
   }
+
+  // ---- 0. Session facts: what has the homeowner already told us? ----
+  // Built from each message separately (original fields + every follow-up
+  // answer, in order) so the diagnosis below reasons from what is already
+  // known instead of re-asking it. `contradiction` is set when the LATEST
+  // message conflicts with an earlier established fact.
+  const { facts, subject, contradiction, clarification } = buildSessionFacts({
+    problem, seen, heard, smell, otherSymptoms, conversationHistory
+  });
 
   // ---- 1. Symptom-based risk assessment (independent of category/intent) ----
   const risk = assessRisk(combinedText);
@@ -340,6 +461,35 @@ function localDemoDiagnosis({ category, problem, seen, heard, smell, otherSympto
     return buildUnknownResult();
   }
 
+  // ---- 5. Contradiction / clarification check: if the LATEST answer
+  // conflicts with a fact the homeowner established earlier, or introduces
+  // a combination that needs distinguishing (motor runs vs drum turns),
+  // ask them to clarify instead of silently choosing one reading. Safety
+  // handling above (STOP risks) has already run, so this never delays an
+  // emergency response.
+  if (conversationHistory && conversationHistory.length && (contradiction || clarification)) {
+    return {
+      matched: true,
+      needsFollowUp: true,
+      recognized: true,
+      hasContradiction: Boolean(contradiction),
+      intent: intent || INTENT.TROUBLESHOOT,
+      intentMeta: intentMeta || INTENT_META[INTENT.TROUBLESHOOT],
+      confidence: { level: 'low', label: 'Your latest answer seems to conflict with an earlier one — clarification needed' },
+      hasDanger,
+      dangerConfig,
+      riskLevel: risk.level,
+      clarifyingQuestions: [contradiction ? contradictionQuestion(contradiction) : clarification],
+      category
+    };
+  }
+
+  // ---- 6. Refine the matched issue against the known session facts:
+  // pick the sub-issue that fits (e.g. dryer no-heat vs no-start), drop
+  // causes that contradict what the homeowner already said, and never
+  // re-ask a clarifying question whose answer is already known.
+  const refinedIssue = refineIssueWithFacts(matchedIssue, facts);
+
   const confidence = estimateConfidence(fields.length, matchedKeywordHits, Boolean(conversationHistory && conversationHistory.length));
 
   return {
@@ -351,8 +501,10 @@ function localDemoDiagnosis({ category, problem, seen, heard, smell, otherSympto
     hasDanger,
     dangerConfig,
     riskLevel: risk.level,
-    issue: matchedIssue,
-    relatedGuideId: matchedIssue.relatedGuideId || null,
+    issue: refinedIssue,
+    knownFacts: Object.fromEntries([...facts.entries()].map(([key, fact]) => [key, fact.value])),
+    subject: subject || null,
+    relatedGuideId: matchedIssue.relatedGuideId || refinedIssue.relatedGuideId || null,
     category
   };
 }

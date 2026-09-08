@@ -15,6 +15,7 @@ node tests/regression-co-vs-co2.mjs
 node tests/regression-co-vs-co2-followup.mjs
 node tests/regression-kids-progress.mjs
 node tests/regression-diagnosis-followup.mjs
+node tests/regression-diagnosis-facts.mjs
 ```
 
 Each script exits with a non-zero status (via Node's built-in
@@ -53,6 +54,19 @@ without any additional tooling.
   already-completed activity (the "Do it again" flow) is a safe no-op for
   XP, uniqueness, and badge thresholds, and progress correctly persists to
   (and reloads from) `localStorage`.
+- **regression-diagnosis-facts.mjs** — the session-fact reasoning layer
+  (`js/data/fact-data.js` wired into `diagnoseProblem()` in
+  `js/api/ai-client.js`): "My dryer runs but doesn't get hot." is read as
+  runs+no-heat, so FixWise never re-asks whether it runs and never leads
+  with causes (drive belt, door switch) whose normal symptom would be a
+  dryer that can't run; "My dryer won't start." takes the no-start
+  sub-issue instead; a follow-up like "It's electric." preserves all
+  earlier facts and narrows to electric-dryer no-heat causes; and a later
+  contradictory answer ("The drum doesn't turn.") triggers a clarifying
+  question instead of silently overwriting what was known. Also covers
+  cross-category fact extraction (leak timing, outlet power + overheating,
+  HVAC runs/no-heat), the condition DSL, and confirms the CO/CO2 safety
+  behavior is untouched.
 - **regression-diagnosis-followup.mjs** — end-to-end checks against
   `diagnoseProblem()` in `js/api/ai-client.js` (intent + risk + knowledge
   base together): an unrecognized-but-real signal like "My CO2 alarm is

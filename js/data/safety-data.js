@@ -194,13 +194,22 @@ export function escapeRegExp(str) {
 /**
  * Whole-word/phrase match: guards against substrings matching inside an
  * unrelated longer word (e.g. the "fire" signal should not fire on
- * "fireplace" or "firearm"). Uses \b word boundaries around the phrase.
+ * "fireplace" or "firearm"). Uses \b word boundaries around the phrase —
+ * but only where the phrase edge is a word character: \b between two
+ * non-word characters never matches, so a phrase like "won't" (ending in
+ * an apostrophe) would be unmatchable before "doesn't" in the text. For
+ * non-word edges the surrounding character is checked manually instead
+ * (start-of-string or a non-word char), which keeps "spark" out of
+ * "sparkling" while letting contractions match contractions.
  * Exported so other modules (e.g. js/api/ai-client.js's malfunction-signal
- * detection) can reuse the same safe matching approach instead of plain
- * substring checks.
+ * detection and js/data/fact-data.js's fact extraction) can reuse the same
+ * safe matching approach instead of plain substring checks.
  */
 export function matchesKeyword(normalizedText, keyword) {
-  const pattern = new RegExp(`\\b${escapeRegExp(keyword)}\\b`, 'i');
+  const escaped = escapeRegExp(keyword);
+  const left = /^\w/.test(keyword) ? '\\b' : '(?:^|[^\\w])';
+  const right = /\w$/.test(keyword) ? '\\b' : '(?![\\w])';
+  const pattern = new RegExp(`${left}${escaped}${right}`, 'i');
   return pattern.test(normalizedText);
 }
 

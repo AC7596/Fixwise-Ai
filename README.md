@@ -32,6 +32,14 @@ designed to run on **GitHub Pages**.
   answer is added to the current diagnosis session and the diagnosis is
   re-run using the full conversation so far (see "Diagnosis architecture"
   below).
+- **Session-fact reasoning:** the demo diagnosis engine extracts explicit
+  facts from everything the homeowner has already said — the original
+  description and every follow-up answer (e.g. "runs but doesn't heat"
+  = appliance runs + no heat; "it's electric" = power type) — and uses
+  them to pick the right troubleshooting path, to never re-ask an
+  already-answered question, to demote causes that contradict known facts,
+  and to ask for clarification when a later answer conflicts with an
+  earlier one (see `js/data/fact-data.js`).
 - **In-browser session state:** the current diagnosis (form fields, any
   follow-up answers, and the latest result) is saved to the browser's
   `sessionStorage` so it survives a page reload within the same tab. It
@@ -92,6 +100,18 @@ Follow-up answers are appended to `conversationHistory` in the browser
 session and re-sent with the next diagnosis request, so a real backend can
 use the full conversation to progressively narrow its answer instead of
 treating each message as unrelated.
+
+The demo engine's `localDemoDiagnosis()` already models that narrowing
+locally: `js/data/fact-data.js` extracts session facts from each message
+separately (original form fields, then each follow-up answer in order),
+and the result is used to (1) select the matching sub-issue of a
+knowledge-base entry (e.g. dryer no-heat vs no-start), (2) filter out
+clarifying questions whose answers are already known, (3) drop or demote
+causes that contradict established facts, and (4) turn a contradictory
+later answer into a clarifying question instead of silently picking one
+reading. Knowledge-base entries declare this declaratively via `subIssues`
+(`when`/`notWhen` fact conditions) and per-cause/per-question `when` /
+`notWhen` conditions in `js/data/diagnosis-data.js`.
 
 `localDemoDiagnosis()` is intentionally designed to never dead-end: when it
 recognizes an intent (troubleshoot/repair/replace/install/...) or a safety
