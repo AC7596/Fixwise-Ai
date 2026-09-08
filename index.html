@@ -13,6 +13,11 @@
     instead of using the local demo diagnosis engine.
   -->
   <meta name="fixwise-backend-url" content="" />
+  <!--
+    Hosted checkout configuration (no secret keys — static hosting safe).
+    Set content to your public Stripe Payment Link or hosted checkout URL.
+  -->
+  <meta name="fixwise-checkout-url" content="" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -25,6 +30,7 @@
       <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false">☰</button>
       <nav id="navLinks" class="nav-links">
         <a href="#diagnosis">AI Diagnosis</a>
+        <a href="#pricing">Pricing</a>
         <a href="#guides">Repair Guides</a>
         <a href="#kids">FixWise Kids</a>
         <a href="#safety">Safety</a>
@@ -44,7 +50,8 @@
             what may be happening, what to check next, and when it is safer to call a professional.
           </p>
           <div class="hero-actions">
-            <a class="btn primary" href="#diagnosis">Try the diagnosis demo</a>
+            <a class="btn primary hero-early-access-btn" href="#pricing">Get FixWise Early Access</a>
+            <a class="btn secondary" href="#diagnosis">Try the diagnosis demo</a>
             <a class="btn secondary" href="#guides">Browse repair guides</a>
           </div>
           <div class="trust-row">
@@ -66,6 +73,83 @@
             <span>P-trap buildup</span>
           </div>
           <small>Demo only — this version does not send your problem to an AI service yet.</small>
+        </div>
+      </div>
+    </section>
+
+    <section class="section alt pricing-section" id="pricing">
+      <div class="container">
+        <div class="section-heading text-center" style="max-width: 760px; margin: 0 auto 40px;">
+          <div class="eyebrow">Early Access Offer</div>
+          <h2>Become a Founding Member</h2>
+          <p>Lock in introductory pricing and support the future of AI-powered home repair assistance.</p>
+        </div>
+
+        <div class="pricing-grid">
+          <div class="pricing-card">
+            <div class="pricing-badge-row">
+              <span class="status-pill highlight">INTRODUCTORY OFFER</span>
+            </div>
+            <h3>FIXWISE AI FOUNDING MEMBER</h3>
+            <div class="pricing-price-row">
+              <span class="price-val">$9.99</span>
+              <span class="price-period">/ month</span>
+            </div>
+            <p class="pricing-subtext">Introductory rate for early supporters. Cancel anytime.</p>
+
+            <div class="pricing-features-block">
+              <h4>What's included in Founding Member access:</h4>
+              <ul class="pricing-feature-list">
+                <li>
+                  <span class="feat-icon">✓</span>
+                  <span class="feat-label">Access to FixWise AI home diagnosis tools</span>
+                  <span class="status-tag live">AVAILABLE NOW</span>
+                </li>
+                <li>
+                  <span class="feat-icon">✓</span>
+                  <span class="feat-label">Step-by-step repair guidance</span>
+                  <span class="status-tag live">AVAILABLE NOW</span>
+                </li>
+                <li>
+                  <span class="feat-icon">✓</span>
+                  <span class="feat-label">Comprehensive repair guides</span>
+                  <span class="status-tag live">AVAILABLE NOW</span>
+                </li>
+                <li>
+                  <span class="feat-icon">✓</span>
+                  <span class="feat-label">Interactive step-by-step repair assistance</span>
+                  <span class="status-tag live">AVAILABLE NOW</span>
+                </li>
+                <li>
+                  <span class="feat-icon">✓</span>
+                  <span class="feat-label">FixWise Kids / Fixy family learning features</span>
+                  <span class="status-tag live">AVAILABLE NOW</span>
+                </li>
+                <li>
+                  <span class="feat-icon">⏳</span>
+                  <span class="feat-label">Access to new FixWise features as released</span>
+                  <span class="status-tag coming">IN DEVELOPMENT</span>
+                </li>
+                <li>
+                  <span class="feat-icon">⭐</span>
+                  <span class="feat-label">Founding-member status &amp; priority updates</span>
+                  <span class="status-tag live">AVAILABLE NOW</span>
+                </li>
+              </ul>
+            </div>
+
+            <div class="pricing-actions">
+              <button class="btn primary full cta-founding" id="foundingMemberBtn" data-action="checkout">Become a Founding Member</button>
+              <a class="btn secondary full" href="#diagnosis">Try FixWise Free</a>
+            </div>
+
+            <div class="pricing-transparency">
+              <strong>Honest Product Transparency</strong>
+              <p>
+                FixWise AI is actively being developed. Our working front-end demo uses verified local diagnostic logic while our secure serverless AI backend is configured. FixWise provides informational guidance only and does not replace qualified professionals when professional service is appropriate. No guaranteed diagnoses.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -382,9 +466,39 @@
     </section>
   </main>
 
+  <div id="checkoutModal" class="repair-modal checkout-modal" hidden aria-hidden="true">
+    <div class="repair-modal-backdrop checkout-modal-backdrop"></div>
+    <div class="repair-modal-panel checkout-modal-panel">
+      <button class="repair-modal-close" data-action="close-checkout-modal" aria-label="Close modal">✕</button>
+      <div class="checkout-modal-content">
+        <div class="status-pill">Checkout Integration</div>
+        <h3>Secure Checkout Connection in Progress</h3>
+        <p>
+          Thank you for your interest in becoming a <strong>FixWise AI Founding Member</strong>!
+        </p>
+        <p>
+          Our secure hosted payment checkout is currently being connected. If you are configuring this site, please paste your real Stripe Payment Link or hosted checkout URL into <code>js/checkout-config.js</code> or the <code>&lt;meta name="fixwise-checkout-url"&gt;</code> tag in <code>index.html</code>.
+        </p>
+        <p>
+          In the meantime, feel free to try all of FixWise AI's working home diagnosis tools and repair guides for free!
+        </p>
+        <div class="checkout-modal-actions">
+          <a class="btn primary" href="#diagnosis" data-action="close-checkout-modal">Try Diagnosis Demo</a>
+          <button class="btn secondary" data-action="close-checkout-modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <footer>
     <div class="container footer-row">
       <div class="brand"><span class="brand-mark">FW</span><span>FixWise AI</span></div>
+      <div class="footer-links">
+        <a href="terms.html">Terms</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="safety.html">Safety</a>
+        <a href="contact.html">Contact</a>
+      </div>
       <p>Know what's wrong before you call a pro.</p>
     </div>
   </footer>
