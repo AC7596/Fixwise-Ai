@@ -5,9 +5,10 @@ import path from 'node:path';
 import { getCheckoutUrl, HOSTED_CHECKOUT_URL } from '../js/checkout-config.js';
 
 test('Monetization Configuration & Integration Checks', async (t) => {
-  await t.test('default checkout URL is empty string', () => {
-    assert.equal(HOSTED_CHECKOUT_URL, '');
-    assert.equal(getCheckoutUrl(), '');
+  await t.test('configured checkout URL returns PayPal subscription URL', () => {
+    const expectedUrl = 'https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-3UR170892E856923CNKQ2DVI';
+    assert.equal(HOSTED_CHECKOUT_URL, expectedUrl);
+    assert.equal(getCheckoutUrl(), expectedUrl);
   });
 
   await t.test('required HTML pages exist and contain correct content', () => {
@@ -39,6 +40,7 @@ test('Monetization Configuration & Integration Checks', async (t) => {
       const content = fs.readFileSync(path.resolve(process.cwd(), f), 'utf8');
       assert.equal(content.includes('sk_live_'), false, `${f} must not contain live Stripe secret keys`);
       assert.equal(content.includes('sk_test_'), false, `${f} must not contain test Stripe secret keys`);
+      assert.equal(content.includes('client_secret'), false, `${f} must not contain client secrets`);
       assert.equal(content.includes('PRIVATE_KEY'), false, `${f} must not contain private keys`);
     }
   });
