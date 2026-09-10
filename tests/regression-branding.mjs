@@ -7,13 +7,6 @@ import { HOSTED_CHECKOUT_URL } from '../js/checkout-config.js';
 const repoRoot = process.cwd();
 const homepage = fs.readFileSync(path.resolve(repoRoot, 'index.html'), 'utf8');
 const publicPages = ['index.html', 'terms.html', 'privacy.html', 'safety.html', 'contact.html', 'success.html'];
-const customerFacingJs = [
-  'js/modules/kids.js',
-  'js/modules/kids-activities.js',
-  'js/modules/kids-progress.js',
-  'js/modules/repair-mode.js',
-  'js/modules/diagnosis.js'
-];
 const expectedUrls = {
   'index.html': 'https://atozwiseai.com/',
   'terms.html': 'https://atozwiseai.com/terms.html',
@@ -57,11 +50,26 @@ test('Branding rebrand regression checks', async (t) => {
       'Tap Fixy',
       'Fixy Helper'
     ];
-    for (const source of [...publicPages, ...customerFacingJs]) {
+    for (const source of publicPages) {
       const content = fs.readFileSync(path.resolve(repoRoot, source), 'utf8');
       for (const phrase of disallowed) {
         assert.equal(content.includes(phrase), false, `${source} should not contain ${phrase}`);
       }
+    }
+  });
+
+  await t.test('customer-facing JS copy uses Zee and A to Z Wise AI wording', () => {
+    const checks = [
+      ['js/modules/kids.js', 'Tap Zee for an encouraging message', 'Tap Fixy for an encouraging message'],
+      ['js/modules/kids-activities.js', '🔧 Zee says:', '🔧 Fixy says:'],
+      ['js/modules/kids-progress.js', "label: 'Zee Helper'", "label: 'Fixy Helper'"],
+      ['js/modules/repair-mode.js', 'See the DIY Together activity for this repair', 'See the FixWise Kids activity for this repair'],
+      ['js/modules/diagnosis.js', 'What A to Z Wise AI understands:', 'What FixWise understands:']
+    ];
+    for (const [file, expected, disallowed] of checks) {
+      const content = fs.readFileSync(path.resolve(repoRoot, file), 'utf8');
+      assert.ok(content.includes(expected), `${file} should contain updated branding copy`);
+      assert.equal(content.includes(disallowed), false, `${file} should not contain outdated branding copy`);
     }
   });
 
