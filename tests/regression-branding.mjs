@@ -79,6 +79,7 @@ test('Branding rebrand regression checks', async (t) => {
       '🔧 Fixy says:',
       "label: 'Fixy Helper'",
       'See the FixWise Kids activity for this repair',
+      'Fixy: "',
       'What FixWise understands:',
       'FixWise doesn\'t have enough detail yet to give a specific, useful recommendation.',
       'here is FixWise\'s informational guidance'
@@ -88,6 +89,9 @@ test('Branding rebrand regression checks', async (t) => {
       assert.ok(content.includes(expected), `${file} should contain updated branding copy`);
       assert.equal(content.includes(disallowed), false, `${file} should not contain outdated branding copy`);
     }
+    const repairModeContent = fs.readFileSync(path.resolve(repoRoot, 'js/modules/repair-mode.js'), 'utf8');
+    assert.ok(repairModeContent.includes('🔧 Zee says:'), 'repair-mode.js should contain Zee helper copy');
+    assert.equal(repairModeContent.includes('🔧 Fixy says:'), false, 'repair-mode.js should not contain Fixy helper copy');
     for (const file of customerFacingSources) {
       const content = fs.readFileSync(path.resolve(repoRoot, file), 'utf8');
       for (const phrase of disallowedPhrases) {
