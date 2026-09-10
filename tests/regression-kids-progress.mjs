@@ -83,4 +83,13 @@ globalThis.window.localStorage.setItem('fixwiseKidsProgress', JSON.stringify({
 p = getProgress();
 check('legacy fixy-helper badge data migrates to zee-helper on load', p.badges.includes('zee-helper') && !p.badges.includes('fixy-helper'));
 
+globalThis.window.localStorage.setItem('fixwiseKidsProgress', JSON.stringify({
+  xp: 30,
+  level: 2,
+  badges: ['zee-helper', 'fixy-helper'],
+  completedActivityIds: ['a1', 'a2', 'a3']
+}));
+p = getProgress();
+check('mixed legacy/current badge data deduplicates to one zee-helper badge', p.badges.filter(b => b === 'zee-helper').length === 1);
+
 console.log(`\nregression-kids-progress.mjs: ${pass} checks passed`);

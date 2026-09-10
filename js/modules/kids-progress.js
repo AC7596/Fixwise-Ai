@@ -28,7 +28,7 @@ function safeGet() {
     const raw = window.localStorage.getItem(PROGRESS_KEY);
     if (!raw) return defaultProgress();
     const parsed = { ...defaultProgress(), ...JSON.parse(raw) };
-    parsed.badges = (parsed.badges || []).map(b => b === 'fixy-helper' ? 'zee-helper' : b);
+    parsed.badges = Array.from(new Set((parsed.badges || []).map(b => b === 'fixy-helper' ? 'zee-helper' : b)));
     return parsed;
   } catch (err) {
     return defaultProgress();
