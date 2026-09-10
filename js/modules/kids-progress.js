@@ -16,7 +16,7 @@ export const BADGES = {
   'safety-spotter': { id: 'safety-spotter', label: 'Safety Spotter', icon: '🛡️', description: 'Knows which jobs belong to grown-ups.' },
   'problem-solver': { id: 'problem-solver', label: 'Problem Solver', icon: '🧩', description: 'Figured out the right order and reasoning.' },
   'money-smart': { id: 'money-smart', label: 'Money Smart', icon: '💰', description: 'Learned what repairs and parts really cost.' },
-  'fixy-helper': { id: 'fixy-helper', label: 'Fixy Helper', icon: '⭐', description: 'Completed a full activity set with Fixy.' }
+  'fixy-helper': { id: 'fixy-helper', label: 'Zee Helper', icon: '⭐', description: 'Completed a full activity set with Zee.' }
 };
 
 function defaultProgress() {

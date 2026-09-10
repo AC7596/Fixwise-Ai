@@ -83,7 +83,7 @@ function renderActivity() {
     const message = getFixyMessage(FIXY_CONTEXT.FINISHED_ACTIVITY);
     body.innerHTML = `
       <div class="kid-activity-card kid-activity-complete">
-        <p class="kid-fixy-line">🔧 Fixy says: "${escapeHtml(message)}"</p>
+        <p class="kid-fixy-line">🔧 Zee says: "${escapeHtml(message)}"</p>
         <h4>All activities complete for this repair!</h4>
         <button type="button" class="btn secondary" id="kidsRestartBtn">Do it again</button>
       </div>
@@ -173,7 +173,7 @@ function onCorrect(activity, totalInSet) {
   const feedback = document.getElementById('kidFeedback');
   const message = getFixyMessage(FIXY_CONTEXT.SOLVED_PROBLEM);
   if (feedback) {
-    feedback.textContent = `✅ ${activity.explanation} — Fixy: "${message}"`;
+    feedback.textContent = `✅ ${activity.explanation} — Zee: "${message}"`;
     feedback.className = 'kid-feedback is-correct';
   }
   setTimeout(() => {
@@ -187,7 +187,7 @@ function onIncorrect() {
   const feedback = document.getElementById('kidFeedback');
   const message = getFixyMessage(FIXY_CONTEXT.MISTAKE);
   if (feedback) {
-    feedback.textContent = `Not quite — Fixy: "${message}" Try again!`;
+    feedback.textContent = `Not quite — Zee: "${message}" Try again!`;
     feedback.className = 'kid-feedback is-incorrect';
   }
 }

@@ -17,7 +17,7 @@ test('Monetization Configuration & Integration Checks', async (t) => {
       const fullPath = path.resolve(process.cwd(), page);
       assert.ok(fs.existsSync(fullPath), `${page} should exist`);
       const content = fs.readFileSync(fullPath, 'utf8');
-      assert.ok(content.includes('FixWise AI'), `${page} should reference FixWise AI`);
+      assert.ok(content.includes('A to Z Wise AI'), `${page} should reference A to Z Wise AI`);
       assert.ok(content.includes('styles.css'), `${page} should include styles.css`);
     }
   });
@@ -27,9 +27,9 @@ test('Monetization Configuration & Integration Checks', async (t) => {
     const indexContent = fs.readFileSync(indexPath, 'utf8');
     assert.ok(indexContent.includes('id="pricing"'), 'index.html should have pricing section');
     assert.ok(indexContent.includes('$9.99'), 'index.html should state $9.99 pricing');
-    assert.ok(indexContent.includes('FIXWISE AI FOUNDING MEMBER'), 'index.html should feature Founding Member offer');
+    assert.ok(indexContent.includes('A TO Z WISE AI FOUNDING MEMBER'), 'index.html should feature Founding Member offer');
     assert.ok(indexContent.includes('Become a Founding Member'), 'index.html should contain primary CTA');
-    assert.ok(indexContent.includes('Get FixWise Early Access'), 'index.html hero should contain monetization CTA');
+    assert.ok(indexContent.includes('Become a Founding Member'), 'index.html hero should contain monetization CTA');
     assert.ok(indexContent.includes('AVAILABLE NOW'), 'index.html should label available features');
     assert.ok(indexContent.includes('IN DEVELOPMENT'), 'index.html should label in-development features');
   });

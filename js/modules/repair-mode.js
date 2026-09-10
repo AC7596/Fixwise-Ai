@@ -195,7 +195,7 @@ function toggleInlinePanel(kind, node) {
   } else if (kind === 'help') {
     const message = getFixyMessage(FIXY_CONTEXT.MISTAKE);
     const proNote = state.guide.callPro ? `<p>${escapeHtml(state.guide.callPro)}</p>` : '';
-    panel.innerHTML = `<div class="repair-inline-note"><strong>🔧 Fixy says: "${escapeHtml(message)}"</strong><p>Take your time — re-read the step, check the "what you should see" note, and back up a step if needed.</p>${proNote}</div>`;
+    panel.innerHTML = `<div class="repair-inline-note"><strong>🔧 Zee says: "${escapeHtml(message)}"</strong><p>Take your time — re-read the step, check the "what you should see" note, and back up a step if needed.</p>${proNote}</div>`;
   }
 }
 
@@ -222,14 +222,14 @@ function renderComplete(body) {
     <div class="repair-complete">
       <div class="repair-complete-icon">${wasNonRepairPath ? '🔍' : '🎉'}</div>
       <h3>${escapeHtml(heading)}</h3>
-      <p class="kid-fixy-line">🔧 Fixy says: "${escapeHtml(message)}"</p>
+      <p class="kid-fixy-line">🔧 Zee says: "${escapeHtml(message)}"</p>
       ${wasNonRepairPath
         ? '<p>Now that you know the faucet type, come back and choose it in "Guide me through it" to finish the repair.</p>'
         : (state.guide.verification ? `<p><strong>Verify it worked:</strong> ${escapeHtml(state.guide.verification)}</p>` : '')}
       ${state.guide.callPro ? `<p class="professional-note"><strong>Still not right?</strong> ${escapeHtml(state.guide.callPro)}</p>` : ''}
       <div class="repair-step-actions">
         <button type="button" class="btn secondary" id="repairCloseComplete">Close</button>
-        <a class="btn primary" href="#kids" id="repairSeeKids">See the FixWise Kids activity for this repair</a>
+        <a class="btn primary" href="#kids" id="repairSeeKids">See the DIY Together activity for this repair</a>
       </div>
     </div>
   `;

@@ -1,6 +1,6 @@
-# FixWise AI — regression tests
+# A to Z Wise AI — regression tests
 
-Lightweight, dependency-free regression tests for FixWise AI's front-end
+Lightweight, dependency-free regression tests for A to Z Wise AI's front-end
 logic modules. These run directly under plain Node.js (no `npm install`,
 no test framework, no build step) — consistent with this project's
 GitHub-Pages-only, no-build-step constraint.
@@ -16,6 +16,7 @@ node tests/regression-co-vs-co2-followup.mjs
 node tests/regression-kids-progress.mjs
 node tests/regression-diagnosis-followup.mjs
 node tests/regression-diagnosis-facts.mjs
+node tests/regression-branding.mjs
 ```
 
 Each script exits with a non-zero status (via Node's built-in
@@ -57,7 +58,7 @@ without any additional tooling.
 - **regression-diagnosis-facts.mjs** — the session-fact reasoning layer
   (`js/data/fact-data.js` wired into `diagnoseProblem()` in
   `js/api/ai-client.js`): "My dryer runs but doesn't get hot." is read as
-  runs+no-heat, so FixWise never re-asks whether it runs and never leads
+  runs+no-heat, so A to Z Wise AI never re-asks whether it runs and never leads
   with causes (drive belt, door switch) whose normal symptom would be a
   dryer that can't run; "My dryer won't start." takes the no-start
   sub-issue instead; a follow-up like "It's electric." preserves all
@@ -78,4 +79,4 @@ without any additional tooling.
   follow-ups; a matched issue with a related interactive guide (e.g.
   dripping faucet) surfaces `relatedGuideId` for the "Guide me through it"
   hand-off; and genuinely unrecognizable input still gets an honest,
-  Fixy-style follow-up instead of a dead end.
+  Zee-style follow-up instead of a dead end.

@@ -1,26 +1,25 @@
-# FixWise AI
+# A to Z Wise AI
 
 **Know what's wrong before you call a pro.**
 
-FixWise AI is a front-end product foundation for an AI-powered home repair
-assistant. It helps homeowners describe a repair problem, get informational
+A to Z Wise AI is a front-end product foundation for an AI-assisted home repair
+platform. It helps homeowners describe a repair problem, get informational
 guidance on likely causes and next steps, browse a library of repair guides,
-and — through **FixWise Kids** and its mascot **Fixy** — turn real repairs
+and — through **DIY Together** and its mascot **Zee** — turn real repairs
 into safe, age-appropriate learning moments for kids.
 
-> "Fix it together. Learn it together." — FixWise Kids
-> "I don't know yet — let's figure it out!" — Fixy
+> "Fix it together. Learn it together." — DIY Together with Zee
+> "I don't know yet — let's figure it out!" — Zee
 
 This is a **static site** (HTML/CSS/JavaScript, ES modules, no build step)
 designed to run on **GitHub Pages**.
 
 ---
 
-## What FixWise AI currently does
+## What A to Z Wise AI currently does
 
 - **AI Home Diagnosis (front-end demo):** homeowners pick a category
-  (Plumbing, Electrical, HVAC, Appliance, Structural, Automotive/Home
-  Equipment, Doors & Windows, or Other) and describe what they see, hear,
+  (Plumbing, Electrical, HVAC, Appliance, Structural, Doors & Windows, or Other) and describe what they see, hear,
   smell, and notice, optionally attach photos, and get a structured result:
   a confidence/likelihood label, most likely causes, other possible causes,
   clarifying questions, step-by-step troubleshooting, tools/parts needed,
@@ -56,7 +55,7 @@ designed to run on **GitHub Pages**.
   Drywall, Flooring, Bathrooms, Kitchens, and Basic Home Maintenance. Each
   guide includes symptoms, causes, tools, parts, safety warnings, steps,
   time, difficulty, tips, stop conditions, and when to call a pro.
-- **FixWise Kids / Fixy:** a mascot and concept explaining how a child can
+- **DIY Together with Zee:** a mascot-led concept explaining how a child can
   safely follow along with a real repair a parent is doing, with a roadmap
   of future learning activities.
 - **Safety system:** a dedicated section calling out high-risk situations
@@ -118,7 +117,7 @@ recognizes an intent (troubleshoot/repair/replace/install/...) or a safety
 signal but doesn't have a specific knowledge-base match, it asks a
 clarifying question (`needsFollowUp: true`) instead of a flat "no match"
 response — and if it genuinely doesn't recognize anything at all, it says
-so honestly and asks a general question, in keeping with Fixy's "I don't
+so honestly and asks a general question, in keeping with Zee's "I don't
 know yet — let's figure it out" philosophy. When a matched issue has a
 corresponding entry in `js/data/guides-data.js`, `relatedGuideId` is set so
 the UI can offer "Guide me through it" and hand off into the existing
@@ -126,7 +125,7 @@ interactive repair mode (`js/modules/repair-mode.js`).
 
 ## Demo Mode & backend configuration
 
-FixWise AI ships with **no backend configured**, so it runs in **Demo
+A to Z Wise AI ships with **no backend configured**, so it runs in **Demo
 Mode**: `js/api/ai-client.js` uses local, keyword-matching logic instead of
 calling a network API. The UI shows a "Demo Mode" badge next to diagnosis
 results so this is never presented as a real AI analysis.
@@ -162,8 +161,8 @@ implement.
   passed along in the request, but `analyzePhotos()` honestly reports that
   automatic image analysis is not yet connected — the site never pretends
   to have analyzed an image.
-- FixWise Kids features beyond the current mascot/concept (levels, badges,
-  parent-linked activities, animated Fixy content, etc.) are shown as a
+- DIY Together with Zee features beyond the current mascot/concept (levels, badges,
+  parent-linked activities, animated Zee content, etc.) are shown as a
   "coming soon" roadmap, not working features.
 - User accounts, saved projects, repair history, professional referrals,
   parts recommendations, and cost estimates are represented as roadmap
@@ -234,7 +233,6 @@ which GitHub Pages supports without any additional configuration.
 
 ## Brand note
 
-The product name "FixWise AI" and mascot "Fixy" are kept as-is for this
-version. Brand-specific strings are centralized (e.g. level labels in
-`js/data/levels.js`) so a future rename would touch a small, well-defined
-set of files rather than the whole codebase.
+The public product brand is "A to Z Wise AI" and the family helper mascot is
+"Zee". Internal config keys and storage keys may still use legacy `fixwise`
+identifiers where changing them would create unnecessary migration risk.
