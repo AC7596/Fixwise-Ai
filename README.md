@@ -188,7 +188,7 @@ js/
     photo-upload.js        Multi-photo select/preview/remove
     diagnosis.js            Diagnosis form + results rendering
     guides.js                Repair guide search/filter/render
-    kids.js                   Fixy interactivity
+    kids.js                   Zee interactivity
   data/
     levels.js               Shared DIY/professional level definitions
     diagnosis-data.js        Diagnosis knowledge base (demo logic)
