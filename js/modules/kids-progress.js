@@ -16,7 +16,7 @@ export const BADGES = {
   'safety-spotter': { id: 'safety-spotter', label: 'Safety Spotter', icon: '🛡️', description: 'Knows which jobs belong to grown-ups.' },
   'problem-solver': { id: 'problem-solver', label: 'Problem Solver', icon: '🧩', description: 'Figured out the right order and reasoning.' },
   'money-smart': { id: 'money-smart', label: 'Money Smart', icon: '💰', description: 'Learned what repairs and parts really cost.' },
-  'fixy-helper': { id: 'fixy-helper', label: 'Zee Helper', icon: '⭐', description: 'Completed a full activity set with Zee.' }
+  'zee-helper': { id: 'zee-helper', label: 'Zee Helper', icon: '⭐', description: 'Completed a full activity set with Zee.' }
 };
 
 function defaultProgress() {
@@ -27,7 +27,9 @@ function safeGet() {
   try {
     const raw = window.localStorage.getItem(PROGRESS_KEY);
     if (!raw) return defaultProgress();
-    return { ...defaultProgress(), ...JSON.parse(raw) };
+    const parsed = { ...defaultProgress(), ...JSON.parse(raw) };
+    parsed.badges = (parsed.badges || []).map(b => b === 'fixy-helper' ? 'zee-helper' : b);
+    return parsed;
   } catch (err) {
     return defaultProgress();
   }
@@ -58,7 +60,7 @@ export function resetProgress() {
  * @param {string} activityId
  * @param {string} badgeId one of BADGES keys
  * @param {string[]} [setActivityIds] every activity id in the activity's
- *   set, used to award "Fixy Helper" once every one of them has been
+ *   set, used to award "Zee Helper" once every one of them has been
  *   completed at least once (computed from the authoritative
  *   completedActivityIds list — never from a caller-supplied count — so a
  *   replay can never inflate or miscalculate this threshold).
@@ -76,8 +78,8 @@ export function awardActivity(activityId, badgeId, setActivityIds) {
   }
   if (Array.isArray(setActivityIds) && setActivityIds.length) {
     const completedInSet = setActivityIds.filter(id => progress.completedActivityIds.includes(id)).length;
-    if (completedInSet >= setActivityIds.length && !progress.badges.includes('fixy-helper')) {
-      progress.badges.push('fixy-helper');
+    if (completedInSet >= setActivityIds.length && !progress.badges.includes('zee-helper')) {
+      progress.badges.push('zee-helper');
     }
   }
   progress.level = Math.max(1, Math.floor(progress.xp / XP_PER_LEVEL) + 1);
