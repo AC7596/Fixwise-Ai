@@ -7,10 +7,17 @@ import { HOSTED_CHECKOUT_URL } from '../js/checkout-config.js';
 const repoRoot = process.cwd();
 const homepage = fs.readFileSync(path.resolve(repoRoot, 'index.html'), 'utf8');
 const publicPages = ['index.html', 'terms.html', 'privacy.html', 'safety.html', 'contact.html', 'success.html'];
+const expectedUrls = {
+  'index.html': 'https://atozwiseai.com/',
+  'terms.html': 'https://atozwiseai.com/terms.html',
+  'privacy.html': 'https://atozwiseai.com/privacy.html',
+  'safety.html': 'https://atozwiseai.com/safety.html',
+  'contact.html': 'https://atozwiseai.com/contact.html',
+  'success.html': 'https://atozwiseai.com/success.html'
+};
 
 test('Branding rebrand regression checks', async (t) => {
   const oldDomainPattern = /ac7596\.github\.io\/fixwise-ai/i;
-  const publicDomainPattern = /https:\/\/atozwiseai\.com(?=[/"'#<\s])/i;
 
   await t.test('homepage shows new brand, slogan, and family section copy', () => {
     assert.ok(homepage.includes('A to Z Wise AI'));
@@ -20,10 +27,12 @@ test('Branding rebrand regression checks', async (t) => {
     assert.ok(homepage.includes('ZEE'));
   });
 
-  await t.test('public pages use the custom domain and not the GitHub Pages URL', () => {
+  await t.test('public pages use the custom domain in canonical and Open Graph URLs', () => {
     for (const page of publicPages) {
       const content = fs.readFileSync(path.resolve(repoRoot, page), 'utf8');
-      assert.ok(publicDomainPattern.test(content), `${page} should reference the custom domain`);
+      const expectedUrl = expectedUrls[page];
+      assert.ok(content.includes(`<link rel="canonical" href="${expectedUrl}" />`), `${page} should set the canonical URL`);
+      assert.ok(content.includes(`<meta property="og:url" content="${expectedUrl}" />`), `${page} should set the Open Graph URL`);
       assert.equal(oldDomainPattern.test(content), false, `${page} should not reference the GitHub Pages URL`);
     }
   });
