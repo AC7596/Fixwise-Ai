@@ -7,6 +7,14 @@ import { HOSTED_CHECKOUT_URL } from '../js/checkout-config.js';
 const repoRoot = process.cwd();
 const homepage = fs.readFileSync(path.resolve(repoRoot, 'index.html'), 'utf8');
 const publicPages = ['index.html', 'terms.html', 'privacy.html', 'safety.html', 'contact.html', 'success.html'];
+const customerFacingSources = [
+  'js/modules/diagnosis.js',
+  'js/modules/kids.js',
+  'js/modules/kids-activities.js',
+  'js/modules/kids-progress.js',
+  'js/modules/repair-mode.js',
+  'js/data/fixy-messages.js'
+];
 const expectedUrls = {
   'index.html': 'https://atozwiseai.com/',
   'terms.html': 'https://atozwiseai.com/terms.html',
@@ -66,10 +74,25 @@ test('Branding rebrand regression checks', async (t) => {
       ['js/modules/repair-mode.js', 'See the DIY Together activity for this repair', 'See the FixWise Kids activity for this repair'],
       ['js/modules/diagnosis.js', 'What A to Z Wise AI understands:', 'What FixWise understands:']
     ];
+    const disallowedPhrases = [
+      'Tap Fixy for an encouraging message',
+      '🔧 Fixy says:',
+      "label: 'Fixy Helper'",
+      'See the FixWise Kids activity for this repair',
+      'What FixWise understands:',
+      'FixWise doesn\'t have enough detail yet to give a specific, useful recommendation.',
+      'here is FixWise\'s informational guidance'
+    ];
     for (const [file, expected, disallowed] of checks) {
       const content = fs.readFileSync(path.resolve(repoRoot, file), 'utf8');
       assert.ok(content.includes(expected), `${file} should contain updated branding copy`);
       assert.equal(content.includes(disallowed), false, `${file} should not contain outdated branding copy`);
+    }
+    for (const file of customerFacingSources) {
+      const content = fs.readFileSync(path.resolve(repoRoot, file), 'utf8');
+      for (const phrase of disallowedPhrases) {
+        assert.equal(content.includes(phrase), false, `${file} should not contain ${phrase}`);
+      }
     }
   });
 
