@@ -46,7 +46,7 @@ with no network calls and no keys anywhere in the repository.
 
 ```jsonc
 {
-  "category": "string (Plumbing | Electrical | Heating & Cooling | Appliance | Structural | Doors & Windows | Other)",
+  "category": "string (Plumbing | Electrical | Heating & Cooling | Appliance | Structural | Home Equipment | Doors & Windows | Other)",
   "problem": "string",
   "seen": "string",
   "heard": "string",

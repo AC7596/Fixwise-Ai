@@ -19,7 +19,7 @@ designed to run on **GitHub Pages**.
 ## What A to Z Wise AI currently does
 
 - **AI Home Diagnosis (front-end demo):** homeowners pick a category
-  (Plumbing, Electrical, HVAC, Appliance, Structural, Doors & Windows, or Other) and describe what they see, hear,
+  (Plumbing, Electrical, HVAC, Appliance, Structural, Home Equipment, Doors & Windows, or Other) and describe what they see, hear,
   smell, and notice, optionally attach photos, and get a structured result:
   a confidence/likelihood label, most likely causes, other possible causes,
   clarifying questions, step-by-step troubleshooting, tools/parts needed,
