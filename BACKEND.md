@@ -1,6 +1,6 @@
-# Connecting a Secure AI Backend to FixWise AI
+# Connecting a Secure AI Backend to A to Z Wise AI
 
-FixWise AI's front end is currently hosted on **GitHub Pages**, which only
+A to Z Wise AI's front end is currently hosted on **GitHub Pages**, which only
 serves static files (HTML, CSS, JavaScript, images). Static hosting **cannot
 securely hold API keys or secrets** — anything placed in browser-side code
 is publicly visible to anyone who views the page source. This document
@@ -12,7 +12,7 @@ service without exposing credentials.
 If an AI provider API key were placed directly in `js/api/ai-client.js` (or
 any other HTML/CSS/JS file), anyone visiting the site could copy it and use
 it — potentially running up usage costs or abusing the account. This is why
-FixWise AI's diagnosis logic currently runs entirely client-side as a demo,
+A to Z Wise AI's diagnosis logic currently runs entirely client-side as a demo,
 with no network calls and no keys anywhere in the repository.
 
 ## What a production backend needs
@@ -38,7 +38,7 @@ with no network calls and no keys anywhere in the repository.
    GitHub Pages origin (e.g. `https://<user>.github.io`).
 6. **(Optional, for future features) A database and authentication
    provider** for user accounts, saved repair projects, repair history,
-   and parent/child linked Fixy activities. This is not required to launch
+   and parent/child linked Zee activities. This is not required to launch
    basic AI diagnosis, but is needed for the "Product Foundation" roadmap
    items described in the README.
 
@@ -46,7 +46,7 @@ with no network calls and no keys anywhere in the repository.
 
 ```jsonc
 {
-  "category": "string (Plumbing | Electrical | Heating & Cooling | Appliance | Structural | Automotive / Home Equipment | Doors & Windows | Other)",
+  "category": "string (Plumbing | Electrical | Heating & Cooling | Appliance | Structural | Home Equipment | Doors & Windows | Other)",
   "problem": "string",
   "seen": "string",
   "heard": "string",
@@ -137,7 +137,7 @@ backend may do the same; the UI ignores them when absent):
 - No AI provider integration code (this requires choosing a provider and
   backend platform, which is a product/infrastructure decision).
 - No authentication/user accounts backend.
-- No database for saved projects, repair history, or Fixy progress.
+- No database for saved projects, repair history, or Zee progress.
 - No real image analysis — this requires an image-capable AI model and
   the same secure-backend pattern described above.
 

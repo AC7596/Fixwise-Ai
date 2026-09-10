@@ -135,8 +135,8 @@ function showLoadingState() {
   resetResultSections();
   els.resultTitle.textContent = 'Analyzing…';
   els.resultText.textContent = isBackendConnected()
-    ? 'Sending your description to the FixWise diagnosis service…'
-    : 'Reviewing your description with the FixWise demo diagnosis engine…';
+    ? 'Sending your description to the A to Z Wise AI diagnosis service…'
+    : 'Reviewing your description with the A to Z Wise AI demo diagnosis engine…';
   els.resultCard.classList.add('is-loading');
 }
 
@@ -154,7 +154,7 @@ function renderIntentLine(diagnosis) {
     return;
   }
   els.intentText.style.display = 'block';
-  els.intentText.innerHTML = `<strong>What FixWise understands:</strong> Based on what you've described, ${escapeHtml(diagnosis.intentMeta.understanding)}.`;
+  els.intentText.innerHTML = `<strong>What A to Z Wise AI understands:</strong> Based on what you've described, ${escapeHtml(diagnosis.intentMeta.understanding)}.`;
 }
 
 function renderDangerWarning(diagnosis) {
@@ -209,7 +209,7 @@ function renderResults(diagnosis, photoResult) {
   // so ask rather than guess (see intent-data.js) ----
   if (diagnosis.needsFollowUp) {
     els.resultTitle.textContent = `Let's narrow this down`;
-    els.resultText.textContent = `Based on what you've described, FixWise doesn't have enough detail yet to give a specific, useful recommendation. One of the questions below can help — add an answer in the box below and FixWise will refine its response.`;
+    els.resultText.textContent = `Based on what you've described, A to Z Wise AI doesn't have enough detail yet to give a specific, useful recommendation. One of the questions below can help — add an answer in the box below and A to Z Wise AI will refine its response.`;
     setListOrHide(els.clarifyingSection, els.clarifyingList, diagnosis.clarifyingQuestions);
     if (els.followUpSection) {
       els.followUpSection.style.display = 'block';
@@ -235,7 +235,7 @@ function renderResults(diagnosis, photoResult) {
 
   const introVerb = diagnosis.intent === 'repair' ? 'repair' : (diagnosis.intent === 'replace' ? 'replacement' : 'issue');
   els.resultTitle.textContent = `${category} ${introVerb === 'issue' ? 'diagnosis' : introVerb} guidance`;
-  els.resultText.textContent = `Based on what you've described, here is FixWise's informational guidance for this ${category.toLowerCase()} ${introVerb}. One possible cause is listed first below — this is not a guaranteed diagnosis, so use it as a starting point.`;
+  els.resultText.textContent = `Based on what you've described, here is A to Z Wise AI's informational guidance for this ${category.toLowerCase()} ${introVerb}. One possible cause is listed first below — this is not a guaranteed diagnosis, so use it as a starting point.`;
 
   setListOrHide(els.mostLikelyCauses, els.mostLikelyList, issue.causes);
   if (diagnosis.confidence && els.confidenceBadge) {
@@ -305,7 +305,7 @@ export function initDiagnosisForm() {
   if (session.lastDiagnosis) {
     renderResults(session.lastDiagnosis, null);
   } else {
-    showEmptyState('Enter a repair problem and press "Analyze problem." This demo shows how the future AI diagnosis flow can respond.');
+    showEmptyState('Enter a repair problem and press "Analyze problem." This demo shows how the future A to Z Wise AI diagnosis flow can respond.');
   }
 
   async function runDiagnosis() {
@@ -391,7 +391,7 @@ export function initDiagnosisForm() {
     clearPhotos();
     clearSession();
     if (els.formError) els.formError.textContent = '';
-    showEmptyState('Enter a repair problem and press "Analyze problem." This demo shows how the future AI diagnosis flow can respond.');
+    showEmptyState('Enter a repair problem and press "Analyze problem." This demo shows how the future A to Z Wise AI diagnosis flow can respond.');
   });
 
   els.guideMeThroughIt?.addEventListener('click', () => {

@@ -14,7 +14,7 @@ export function initFixy() {
 
   fixyCard.setAttribute('role', 'button');
   fixyCard.setAttribute('tabindex', '0');
-  fixyCard.setAttribute('aria-label', 'Tap Fixy for an encouraging message');
+  fixyCard.setAttribute('aria-label', 'Tap Zee for an encouraging message');
 
   const sayNewPhrase = () => {
     speech.textContent = getFixyMessage(FIXY_CONTEXT.IDLE, speech.textContent);

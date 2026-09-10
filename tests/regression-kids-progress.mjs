@@ -40,13 +40,13 @@ let p = awardActivity('a1', 'tool-scout', setIds);
 check('first completion of a1 awards 10 XP', p.xp === 10);
 check('first completion of a1 records exactly 1 unique completed id', p.completedActivityIds.length === 1);
 check('first completion of a1 awards its badge', p.badges.includes('tool-scout'));
-check('fixy-helper is NOT awarded yet (only 1 of 3 activities done)', !p.badges.includes('fixy-helper'));
+check('zee-helper is NOT awarded yet (only 1 of 3 activities done)', !p.badges.includes('zee-helper'));
 
 // --- Replay once ---
 p = awardActivity('a1', 'tool-scout', setIds);
 check('replaying a1 once does not add XP (still 10)', p.xp === 10);
 check('replaying a1 once does not duplicate the completed id (still length 1)', p.completedActivityIds.length === 1);
-check('replaying a1 once does not prematurely award fixy-helper', !p.badges.includes('fixy-helper'));
+check('replaying a1 once does not prematurely award zee-helper', !p.badges.includes('zee-helper'));
 
 // --- Replay multiple times ---
 for (let i = 0; i < 5; i += 1) awardActivity('a1', 'tool-scout', setIds);
@@ -57,21 +57,39 @@ check('replaying a1 five more times still leaves 1 unique completed id', p.compl
 // --- Completing several different activities for the first time ---
 p = awardActivity('a2', 'measurement-master', setIds);
 check('first completion of a2 awards a further 10 XP (total 20)', p.xp === 20);
-check('fixy-helper still not awarded (2 of 3 done)', !p.badges.includes('fixy-helper'));
+check('zee-helper still not awarded (2 of 3 done)', !p.badges.includes('zee-helper'));
 
 p = awardActivity('a3', 'problem-solver', setIds);
 check('first completion of a3 awards a further 10 XP (total 30)', p.xp === 30);
-check('fixy-helper badge threshold reached at 3 of 3 unique completions', p.badges.includes('fixy-helper'));
+check('zee-helper badge threshold reached at 3 of 3 unique completions', p.badges.includes('zee-helper'));
 check('level advances correctly from accumulated XP', p.level === Math.floor(30 / 30) + 1);
 
 // --- Replay after the set is fully complete ---
 p = awardActivity('a3', 'problem-solver', setIds);
 check('replaying a3 after full completion does not add more XP', p.xp === 30);
 check('replaying a3 after full completion keeps 3 unique completed ids', p.completedActivityIds.length === 3);
-check('fixy-helper badge is not duplicated in the badges list', p.badges.filter(b => b === 'fixy-helper').length === 1);
+check('zee-helper badge is not duplicated in the badges list', p.badges.filter(b => b === 'zee-helper').length === 1);
 
 // --- Simulated reload: progress must survive as valid persisted JSON ---
 const persisted = JSON.parse(globalThis.window.localStorage.getItem('fixwiseKidsProgress'));
-check('progress persists correctly for a simulated page reload', persisted.xp === 30 && persisted.completedActivityIds.length === 3 && persisted.badges.includes('fixy-helper'));
+check('progress persists correctly for a simulated page reload', persisted.xp === 30 && persisted.completedActivityIds.length === 3 && persisted.badges.includes('zee-helper'));
+
+globalThis.window.localStorage.setItem('fixwiseKidsProgress', JSON.stringify({
+  xp: 30,
+  level: 2,
+  badges: ['fixy-helper'],
+  completedActivityIds: ['a1', 'a2', 'a3']
+}));
+p = getProgress();
+check('legacy fixy-helper badge data migrates to zee-helper on load', p.badges.includes('zee-helper') && !p.badges.includes('fixy-helper'));
+
+globalThis.window.localStorage.setItem('fixwiseKidsProgress', JSON.stringify({
+  xp: 30,
+  level: 2,
+  badges: ['zee-helper', 'fixy-helper'],
+  completedActivityIds: ['a1', 'a2', 'a3']
+}));
+p = getProgress();
+check('mixed legacy/current badge data deduplicates to one zee-helper badge', p.badges.filter(b => b === 'zee-helper').length === 1);
 
 console.log(`\nregression-kids-progress.mjs: ${pass} checks passed`);

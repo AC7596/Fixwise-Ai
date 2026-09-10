@@ -300,7 +300,10 @@ function refineIssueWithFacts(issueData, facts) {
 
 function localDemoDiagnosis({ category, problem, seen, heard, smell, otherSymptoms, conversationHistory }) {
   const categoryKey = (category || '').toLowerCase();
-  const categoryData = diagnosisDatabase[categoryKey];
+  const normalizedCategoryKey = categoryKey === 'home equipment'
+    ? 'automotive / home equipment'
+    : categoryKey;
+  const categoryData = diagnosisDatabase[normalizedCategoryKey];
 
   const followUpText = (conversationHistory || [])
     .map(entry => entry.answer)
@@ -382,7 +385,7 @@ function localDemoDiagnosis({ category, problem, seen, heard, smell, otherSympto
     hasDanger,
     dangerConfig,
     riskLevel: risk.level,
-    clarifyingQuestions: getIntentFollowUpQuestions(categoryKey, intent),
+    clarifyingQuestions: getIntentFollowUpQuestions(normalizedCategoryKey, intent),
     category
   });
 
